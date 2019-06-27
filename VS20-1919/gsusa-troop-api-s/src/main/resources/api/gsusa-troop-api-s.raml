@@ -1,0 +1,68 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/5c04c2ba-809d-4207-8f0b-f4b401dddfab/ # 
+title: gsusa-troop-api-s
+version: 1.0
+description: This API will load troop data from Saleforce to SOLR system. Salesforce will call this API, whenever a new Troop is created.
+
+traits: 
+  client-id-required:
+      headers:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+
+types:
+  errorResponse: !include dataTypes/ErrorResponse.raml
+  successResponse: !include dataTypes/SuccessResponse.raml
+  troopRequest: !include dataTypes/TroopRequest.raml
+
+/solr:
+  /v1:
+    /troops:
+      displayName: Query and create Troop data in SOLR
+      description: |
+        Create Troop data in SOLR.
+      /load:
+        post:
+            is: [client-id-required]
+            description: |
+              Create a new Troop.
+            body:
+              application/json:
+                type: troopRequest[]
+                example: !include examples/TroopDataArrayObject.json
+            responses:
+              201:
+                description: Created
+                body:
+                  application/json:
+                    type: successResponse
+                    example: |
+                      {
+                        "status": "Successfully created Troop in SOLR"
+                      }
+              400:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Failed to create new Troop in SOLR"
+                        }
+              401:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Unauthorized Access"
+                        }
+              403:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Malformed request"
+                        }

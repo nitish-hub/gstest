@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+	<http:listener-config name="GlobalHttpsConfig" doc:name="HTTP Listener config" doc:id="767e454c-0b93-46d5-abef-3dc22d37bd21" >
+		<http:listener-connection protocol="HTTPS" host="0.0.0.0" port="${https.port}" >
+			<tls:context >
+				<tls:key-store type="jks" path="keystore.jks" alias="selfsigned" keyPassword="${keystore.password}" password="${keystore.password}" />
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="28338cd7-f7c5-41c3-b966-a92cf1fb8398" file="mule-${env}.properties" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="a99a49f7-6d09-4461-b0a9-8110960300db" >
+		<http:request-connection protocol="HTTPS" host="${solr.url}" >
+			<reconnection >
+				<reconnect />
+			</reconnection>
+			<http:authentication >
+				<http:basic-authentication username="${solr.username}" password="${solr.password}" />
+			</http:authentication>
+		</http:request-connection>
+		<http:default-query-params >
+			<http:query-param key="commit" value="true" />
+		</http:default-query-params>
+	</http:request-config>
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="061eeaa9-eb21-49de-99a4-20f544685581" flowRef="gsusa-troop-api-s-main" />
+</mule>
