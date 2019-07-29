@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="createCaseFlow" doc:id="c79eca1a-cd33-4f9c-85ad-5f6392f4a67e" >
+		<try doc:name="Try" doc:id="b4af5242-2768-4c83-8e72-54348c5e6aea" >
+			<ee:transform doc:name="Transform Message" doc:id="fe333d7c-ed57-4bd2-82df-b3c05f5ee91e" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<salesforce:create-single doc:name="Create single Case" doc:id="09937e05-6b7b-467a-bac3-0497bf3307f3" config-ref="Salesforce_Config" type="Case" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="a97ee93f-1784-4de7-9903-18b5a344846d" >
+					<ee:transform doc:name="Error Message" doc:id="014a7abb-cb27-458d-9a5c-67c463021ad4" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Namespace:error.errorType.namespace,
+    Identifier:error.errorType.identifier, 
+   "Mule Message": error.cause.message,
+   "Description": error.cause.errorMessage.payload,
+  ('Custom Message'    : 'Please check if the calling URL is functioning. If it is not responding please contact your system administrator') if error.errorType.identifier == "TIMEOUT"
+} ]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="output" doc:id="09190a2e-7eb1-4d92-9748-c1312a439f51" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="62ec14a2-68bd-4399-af57-8142c251c5e2" >
+				<ee:transform doc:name="Error Message" doc:id="721fb2eb-501b-4fd5-8b75-f57f86e9f7f7" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	Namespace:error.errorType.namespace,
+    Identifier:error.errorType.identifier, 
+   "Mule Message": error.cause.message,
+   "Description": error.cause.errorMessage.payload,
+  ('Custom Message'    : 'Please check if the calling URL is functioning. If it is not responding please contact your system administrator') if error.errorType.identifier == "TIMEOUT"
+} ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

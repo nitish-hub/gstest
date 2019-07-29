@@ -1,0 +1,175 @@
+#%RAML 1.0
+title: gsusa-troop-api-s
+version: v1
+description: This API will load troop data from Saleforce to SOLR system. Salesforce will call this API, whenever a new Troop is created. It also create Case in Salesforce. This API will be calle from customer WEB front to create CASE in salesforce 
+
+types:
+  case:            !include dataTypes/Case.raml
+  RecordType:      !include dataTypes/RecordTypeDataType.raml
+  troopRequest:    !include dataTypes/TroopRequest.raml
+  errorResponse:   !include dataTypes/ErrorResponse.raml
+  successResponse: !include dataTypes/SuccessResponse.raml
+
+traits: 
+  client-id-required:
+      headers:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+
+/sfdc:
+ /v1:
+   /case:
+    displayName: Return all case available in salesforce
+    description: This API will be used to create or update CASE in salesforce
+    get:
+      is: [client-id-required]
+      description: |
+        Return all case available in salesforce
+      responses:
+        200:
+          body:
+            application/json:
+              type: case[]
+              example: !include examples/allCase.json  
+        404:
+          body:
+            application/json:
+              type: errorResponse
+              example: |
+                {
+                  "message": "Resource not found"
+                }    
+    /create:
+     displayName: Create new case in salesforce
+     description: This entity will create case in salesforce
+     post:
+      is:
+        - client-id-required
+      description: Create new case in salesforce
+      body:
+        application/json:
+          type: case
+          example: !include examples/postCase.json
+      responses:
+        201:
+          description: Case creation
+          body:
+            application/json:
+              type: successResponse
+              example: |
+                { 
+                  "status" : "Success",
+                  "message" : "Case successfully created"
+                }
+        400:
+          body:
+            application/json:
+              type: errorResponse
+              example:
+                { 
+                  "status" : "Error",
+                  "message" : "Failed to create new Case"
+                }
+        401:
+          body:
+            application/json:
+              type: errorResponse
+              example: |
+                {
+                  "message": "Unauthorized Access"
+                }
+    /update/{Id}:
+     displayName: Update a case in salesforce
+     description: "Update a case in salesforce"
+     uriParameters:
+      Id:
+        displayName: Id
+
+     put:
+      is: [client-id-required]
+      description: Update Case specified by ID
+      body:
+        application/json:
+            type: case
+            example: !include examples/getCaseByID.json 
+      responses:
+          200:
+             body:
+               application/json:
+                type: successResponse
+                example:  |
+                  {
+                    "status": "Sucess",
+                    "message": "Case Updated Succesfully"
+                  }
+          400:
+              body:
+                application/json:
+                  type: errorResponse
+                  example: |
+                        {
+                         "status": "Error",
+                         "message": "Failed to Update Case"
+                        }
+          404:
+              body:
+                application/json:
+                  type: errorResponse
+                  example: |
+                   {
+                      "message": "Resource not found"
+                   }
+
+/solr:
+  /v1:
+    /troops:
+      displayName: Query and create Troop data in SOLR
+      description: |
+        Create Troop data in SOLR.
+      /load:
+        post:
+            is: [client-id-required]
+            description: |
+              Create a new Troop.
+            body:
+              application/json:
+                type: troopRequest[]
+                example: !include examples/TroopDataArrayObject.json
+            responses:
+              201:
+                description: Created
+                body:
+                  application/json:
+                    type: successResponse
+                    example: |
+                      {
+                        "status": "Successfully created Troop in SOLR"
+                      }
+              400:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Failed to create new Troop in SOLR"
+                        }
+              401:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Unauthorized Access"
+                        }
+              403:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Malformed request"
+                        }
+     
+      
