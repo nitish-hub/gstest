@@ -30,7 +30,7 @@ output application/json
 {	
 	"InterfaceCode":"Troop",
 	"InstanceID": "Troop123",
-	"CreationDate": (now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+	"CreationDate": now(),
 	"ErrorCode": error.errorType.identifier, 
 	"ErrorMessage": error.cause.message, 
 	"Payload" : payload
@@ -53,7 +53,7 @@ output application/json
 ---
 "error response":{  
       "interfacecode":"Troop",
-      "creationdate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+      "creationdate":now(),
       "errordescription":error.cause.errorMessage.payload,
       "errortype":error.errorType.identifier,
       "errormessage":error.cause.message
@@ -77,7 +77,7 @@ output application/json
 ---
 "error response":{  
       "interfacecode":"Troop",
-      "creationdate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+      "creationdate":now(),
       "errordescription":error.cause.errorMessage.payload,
       "errortype":error.errorType.identifier,
       "errormessage":error.cause.message
@@ -94,7 +94,8 @@ output application/json
 output application/json
 ---
 {
-  status: "SUCCESS"
+  status: "SUCCESS",
+  message: "Records/Record has been succesfully published to the Queue"
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
@@ -117,7 +118,7 @@ output application/json
 ---
 "error response":{  
       "interfacecode":"Troop",
-      "creationdate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+      "creationdate":now(),
       "errordescription":error.cause.errorMessage.payload,
       "errortype":error.errorType.identifier,
       "errormessage":error.cause.message

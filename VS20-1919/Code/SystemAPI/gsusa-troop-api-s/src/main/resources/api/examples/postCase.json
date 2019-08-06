@@ -1,18 +1,17 @@
-{
-  "Type": "New",
-  "Origin": "System",
-  "Reason": "Troop",
-  "Status": "Open",
-  "OwnerId": "1234",
-  "Subject": "Issue",
-  "ParentId": "4321",
-  "Priority": "High",
-  "AccountId": "12142",
-  "ContactId": "1313",
-  "Description": "Solid Description",
-  "IsEscalated": false,
-  "SuppliedName": "dheeraj",
-  "SuppliedEmail": "a@mail.com",
-  "SuppliedPhone": "124",
-  "SuppliedCompany": "zylem"
-}
+[
+	{
+		"SequenceId": "1",
+		"Type": "Case",
+		"Fields": { 
+			"Account.GSUSA_Global_Id__c": "000000014",
+			"SuppliedEmail": "testemail@gsusa.org", 
+			"Status": "New", 
+			"Origin": "Phone", 
+			"Reason": "Complex functionality", 
+			"Priority": "Medium", 
+			"Subject": "I need help with an order", 
+			"Description": "I need help placing an order for new uniforms in different sizes", 
+			"RecordTypeId": "Contact_Us" 
+		}
+	}
+]

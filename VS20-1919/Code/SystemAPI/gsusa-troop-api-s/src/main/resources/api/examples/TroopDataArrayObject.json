@@ -29,6 +29,7 @@
     "displayInCatalog": true,
     "parentAccountNumber": "Acc12",
     "totalVolunteers":10,
+    "troopFormationStatus": "Created",
     "totalGirls":8,
     "volunteerPositions":[  
       "Position1"

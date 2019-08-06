@@ -1,18 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" 
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+    xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" 
     xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
 	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
-	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
 http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
 http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
-http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd">
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<apikit:config name="gsusa-troop-api-s-config" raml="gsusa-troop-api-s.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+	
 	<http:listener-config name="GlobalHttpsConfig" doc:name="HTTP Listener config" doc:id="a22d41f9-0a44-4c78-9b3f-406ace3be498" >
 		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
 			<tls:context >
-				<tls:key-store type="jks" path="keystore.jks" alias="selfsigned" keyPassword="${keystore.password}" password="${keystore.password}"/>
+				<tls:key-store type="jks" path="keystore.jks" alias="selfsigned" keyPassword="${keystore.password}" password="${keystore.password}" />
 			</tls:context>
 
 		</http:listener-connection>
@@ -42,7 +48,11 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	<salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config" doc:id="3d103a0b-fbb1-450c-882f-48f7fc621964" >
 		<salesforce:cached-basic-connection username="${sfdc.username}" password="${sfdc.password}" securityToken="${sfdc.securityToken}" url="${sfdc.authURL}" />
 	</salesforce:sfdc-config>
-	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="e78c7647-6a09-4a0d-b4ff-0746f8d2bf00" flowRef="gsusa-troop-api-s-main" />
 	
+	<http:request-config name="SFDC_Case_Create_Request_config" doc:name="HTTP Request configuration" doc:id="0a4867d1-7fa5-4b73-9e5f-029d1c902514" >
+		<http:request-connection protocol="HTTPS" host="${sfdc.case.create.host}" />
+	</http:request-config>
+	<os:object-store name="Auth_Token_Object_store" doc:name="Object store" doc:id="4ef8a5f0-a835-4df3-834f-d0cc78b47833" persistent="false" entryTtl="1" entryTtlUnit="DAYS" expirationInterval="30" />
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="2f672ea6-117e-4245-87ea-f61042726888" flowRef="gsusa-troop-api-s-main" />
 
 </mule>
