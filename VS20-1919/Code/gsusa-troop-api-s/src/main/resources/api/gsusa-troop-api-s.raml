@@ -1,0 +1,228 @@
+#%RAML 1.0
+title: gsusa-troop-api-s
+version: v1
+description: This API will load troop and Org data from Saleforce to SOLR system. Salesforce will call this API, whenever a new Troop or Org need to be created. It also creates Case in Salesforce. This API will be called from customer WEB front to create CASE in salesforce 
+
+types:
+  case:               !include dataTypes/CaseRequest.raml
+  RecordType:         !include dataTypes/RecordTypeDataType.raml
+  troopRequest:       !include dataTypes/TroopRequest.raml
+  errorResponse:      !include dataTypes/ErrorResponse.raml
+  successResponse:    !include dataTypes/SuccessResponse.raml
+  orgRquest:          !include dataTypes/orgRequest.raml
+  schoolRequest:      !include dataTypes/schoolRequest.raml
+  caseSuccessReponse: !include dataTypes/CaseSuccessResponse.raml
+  caseErrorResponse:  !include dataTypes/CaseErrorResponse.raml
+
+traits: 
+  client-id-required:
+      headers:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+
+/sfdc:
+ /v1:
+   /case:
+    description: This API will be used to create or update CASE in salesforce  
+    /create:
+     displayName: Create new case in salesforce
+     description: This entity will create case in salesforce
+     post:
+      is:
+        - client-id-required
+      description: Create new case in salesforce
+
+      body:
+        application/json:
+          type: case
+          example: !include examples/postCase.json
+      responses:
+        201:
+          description: Case creation
+          body:
+            application/json:
+              type: caseSuccessReponse
+              example: |
+                [
+                  {
+                    "SequenceId": "1",
+                    "ReturnStatus": "Success",
+                    "SalesforceId": "50022000002ULSuAAO",
+                     "ErrorMessage": ""
+                   }
+                ]
+        400:
+          body:
+            application/json:
+              type: caseErrorResponse
+              example: |
+                [
+                  {
+                   "SequenceId": "1",
+                   "ReturnStatus": "Error",
+                   "ErrorMessage": "A Record Type was not found with Developer Name                                     invalid for type Case."
+                   }
+                ]
+        401:
+          body:
+            application/json:
+              type: caseErrorResponse
+              example: |
+                [
+                  {
+                   "SequenceId": "1",
+                   "ReturnStatus": "Error",
+                   "ErrorMessage": "A Record Type was not found with Developer Name                                     invalid for type Case."
+                   }
+                ]
+   
+/solr:
+  /v1:
+    /troops:
+      displayName: Query and create Troop data in SOLR
+      description: |
+        Create Troop data in SOLR.
+      /load:
+        post:
+            is: [client-id-required]
+            description: |
+              Create a new Troop.
+            body:
+              application/json:
+                type: troopRequest[]
+                example: !include examples/TroopDataArrayObject.json
+            responses:
+              201:
+                description: Created
+                body:
+                  application/json:
+                    type: successResponse
+                    example: |
+                      {
+                        "status": "Successfully created Troop in SOLR"
+                      }
+              400:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Failed to create new Troop in SOLR"
+                        }
+              401:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Unauthorized Access"
+                        }
+              403:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Malformed request"
+                        }
+    /org:
+      displayName: Create Org in SOLR
+      description: |
+        Create Org data in SOLR.
+      /load:
+        post:
+            is: [client-id-required]
+            description: |
+              Create a new Org.
+            body:
+              application/json:
+                type: orgRquest[]
+                example: !include examples/orgDataArrayObject.json
+            responses:
+              201:
+                description: Created
+                body:
+                  application/json:
+                    type: successResponse
+                    example: |
+                      {
+                        "status": "Successfully created Org in SOLR"
+                      }
+              400:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Failed to create new Org in SOLR"
+                        }
+              401:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Unauthorized Access"
+                        }
+              403:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Malformed request"
+                        }
+ 
+    /School:
+        displayName: Create School in SOLR
+        description: |
+          Create School data in SOLR.
+        /load:
+          post:
+              is: [client-id-required]
+              description: |
+                Create a new School.
+              body:
+                application/json:
+                  type: schoolRequest[]
+                  example: !include examples/schoolDataArrayObject.json        
+              responses:
+                201:
+                  description: Created
+                  body:
+                    application/json:
+                      type: successResponse
+                      example: |
+                        {
+                          "status": "Successfully created School in SOLR"
+                        }
+                400:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Failed to create/update School in SOLR"
+                        }
+                401:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Unauthorized Access"
+                        }
+                403:
+                  body:
+                    application/json:
+                      type: errorResponse
+                      example: |
+                        {
+                          "message": "Malformed request"
+                        }
+             
+                
+                        
+                        

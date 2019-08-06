@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<http:request-config name="SFDC_Token_Request_Config" doc:name="HTTP Request configuration" doc:id="fd66d6f5-0740-4054-8e0b-b9183851a924" >
+		<http:request-connection protocol="HTTPS" host="${auth.sfdc.authTokenrequestURL}" />
+	</http:request-config>
+	<flow name="getSFDCauthaccesstokenFlow" doc:id="bd0e162c-1797-4360-8566-c55770cac3b2" >
+		<try doc:name="Try" doc:id="9349b4f6-7819-40d4-9a7b-4ef34511ab40" >
+			<http:request method="POST" doc:name="getTokenCall" doc:id="da221bd5-a7a9-459f-99ca-a2b6df6547b5" config-ref="SFDC_Token_Request_Config" path="${auth.sfdc.authTokenrequestPath}" target="AccessToken">
+		<http:query-params><![CDATA[#[output application/java
+---
+{
+	grant_type : ${auth.sfdc.grant_type},
+	client_id : ${auth.sfdc.client_id},
+	client_secret : ${auth.sfdc.client_secret},
+	username : ${auth.sfdc.case.username},
+	password : ${auth.sfdc.password}
+	
+}]]]></http:query-params>
+</http:request>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6a95beda-2e57-45cb-a30d-8907aeeaaf37" type="ANY">
+					<ee:transform doc:name="Error Message" doc:id="264cf7e1-4bfd-4d44-bcc1-5575a973816f" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode":"Account Registration",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="GET HOST URL AND TOKEN" doc:id="50a7c352-e696-49ea-bc49-9ca4b81de570" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="SFDCOrderAPIUrl" ><![CDATA[if (vars["AccessToken"].instance_url != null) (vars["AccessToken"].instance_url) else null ]]></ee:set-variable>
+				<ee:set-variable variableName="SFDCAccessToken" ><![CDATA[if (vars["AccessToken"].access_token != null) ("Bearer " ++ vars["AccessToken"].access_token) else null ]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Success Text" doc:id="55acba91-2bb1-45ce-bf73-9cf580e8ff63" message='"Successfully Passed through SFDC Token Generation Process"'/>
+	</flow>
+</mule>
