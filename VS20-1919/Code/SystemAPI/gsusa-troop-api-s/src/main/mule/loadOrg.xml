@@ -22,7 +22,7 @@ payload
 			</ee:transform>
 			<logger level="INFO" doc:name="Logger" doc:id="2515e64d-a235-4d8a-9e2b-2208cfa13286" message="#[payload]"/>
 			<try doc:name="Try" doc:id="875563e5-5d13-4ac5-a405-acc66f2b1dc6" >
-				<http:request method="POST" doc:name="Request" doc:id="5874e333-c57d-4149-9d33-6c9266bc49c0" outputMimeType="application/json" config-ref="HTTP_Request_configuration" path="${solr.org}">
+				<http:request method="POST" doc:name="Request" doc:id="5874e333-c57d-4149-9d33-6c9266bc49c0" outputMimeType="application/json" config-ref="SOLR_HTTPS_Configuration" path="${solr.org}">
 					<http:query-params ><![CDATA[#[output application/java
 ---
 {
@@ -103,7 +103,8 @@ output application/json
 output application/json
 ---
 {
-  status: "SUCCESS"
+  status: "Success",
+  statusMessage: "Records enqueued"
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>

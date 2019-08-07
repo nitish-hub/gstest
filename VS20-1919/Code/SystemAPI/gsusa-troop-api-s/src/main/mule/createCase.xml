@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<mule  xmlns:os="http://www.mulesoft.org/schema/mule/os"
-	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
-	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
-	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+<mule  xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
-http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
 	
 	<flow name="createCaseFlow" doc:id="bd89314e-f48e-44a5-8974-2b2188cca6d5" >
+		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="ce8b8723-4502-4d5c-a355-11da3927b43b" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.case.in.queue}"/>
 		<ee:transform doc:name="Final Payload Logic" doc:id="bbee8e4d-fc4c-438c-b559-91631b09d2a6">
 			<ee:message />
 			<ee:variables>
@@ -44,24 +46,23 @@ payload]]></ee:set-variable>
 		<flow-ref doc:name="callCaseAPI" doc:id="e3b85ffc-1020-4f67-95fc-be596521c12d" name="callCaseAPI" />
 		<choice doc:name="Choice" doc:id="c52b2251-ebf0-4500-8dbc-f76bf11f9507" >
 			<when expression="#[payload[0].ErrorMessage != null]">
-				<ee:transform doc:name="Final Result" doc:id="a153a180-4a1c-4cea-bb29-f5fa8b608712">
+				<ee:transform doc:name="Error Information" doc:id="a153a180-4a1c-4cea-bb29-f5fa8b608712">
 			<ee:message>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-{
-    "interfaceCode":"UIToSFDCCreateCase",
-    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
-    "errorDescription": payload[0],  
-    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
-    "errorCause":error.cause.message,
-    "errorMessage":error.cause.errorMessage.payload,
-    "statusCode" :error.cause.errorMessage.attributes.statusCode
+{	
+	"InterfaceCode":"UIToSFDCCreateCase",
+	"InstanceID": "PostCase",
+	"CreationDate": now(),
+	"ErrorCode": error.errorType.identifier, 
+	"ErrorMessage": payload, 
+	"Payload" : vars.DataPayload
 }]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
-				<set-variable value="400" doc:name="Set Variable" doc:id="97b4429a-d638-4964-9ee2-c718d43d6210" variableName="httpStatus"/>
-				<logger level="INFO" doc:name="Logger" doc:id="6ede0b64-00ad-4b87-ba1a-d894cc082c54" message="Got some error in create case flow."/>
+				<flow-ref doc:name="publishCaseToErrorQueueFlow" doc:id="0832c024-5a45-467c-8b3a-09436c216164" name="publishCaseToErrorQueueFlow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="6ede0b64-00ad-4b87-ba1a-d894cc082c54" message="#[payload]"/>
 			</when>
 			<otherwise >
 				<ee:transform doc:name="Final Result" doc:id="3e20270b-475a-4a03-9014-34eeb331779c" >
@@ -73,6 +74,7 @@ payload]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
 				<logger level="INFO" doc:name="Logger" doc:id="d1abb0e6-ae98-4851-a690-be998a0f43e4" message="Successfully Passed through case create Process" />
+				<logger level="INFO" doc:name="Logger" doc:id="63dc6aeb-6bef-4bd5-a4cb-01bd37e57ab4" message="#[payload]"/>
 			</otherwise>
 		</choice>
 		<error-handler>
@@ -100,7 +102,7 @@ output application/json
 	
 <flow name="callCaseAPI" doc:id="3c8489f3-9ce4-4fcf-b279-7528d8202b0c">
 					<try doc:name="Try" doc:id="8470ad26-8fb0-4141-b2fb-7629431cb0aa" >
-			<http:request method="POST" doc:name="SFDC Case Rest API Request Call" doc:id="e3beb30a-7dd1-4856-bbbb-8daff5c1bc6d" config-ref="SFDC_Case_Create_Request_config" path="${sfdc.case.create.path}">
+			<http:request method="POST" doc:name="SFDC Case Rest API Request Call" doc:id="e3beb30a-7dd1-4856-bbbb-8daff5c1bc6d" config-ref="CASE_HTTPS_Request_configuration" path="${sfdc.case.create.path}">
 					<http:body ><![CDATA[#[%dw 2.0
 output application/json
 ---

@@ -25,6 +25,21 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
+				<cloudHubDeployment>
+                <uri>https://anypoint.mulesoft.com</uri>
+                <muleVersion>${app.runtime}</muleVersion>
+                <username>${username}</username>
+                <password>${password}</password>
+                <applicationName>gsusa-troop-api-s</applicationName>
+                <environment>GSMULEPU-TEST</environment>
+                <properties>
+                         <key>value</key>
+                         <env></env>
+						 <client_id></client_id>
+						 <client_secret></client_secret>
+						 <autodiscovery.id></autodiscovery.id>
+                </properties>
+                </cloudHubDeployment>
 				<classifier>mule-application</classifier>
                 </configuration>
 			</plugin>

@@ -18,7 +18,7 @@ payload]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
 				<try doc:name="Try" doc:id="614df60e-f703-4fdc-9f99-a003a5ad5a80" >
-				<http:request method="POST" doc:name="Create Troop Request" doc:id="a715bd88-7f93-4851-ad91-6321e8c7138e" path="${solr.create}" config-ref="HTTP_Request_configuration" />
+				<http:request method="POST" doc:name="Create Troop Request" doc:id="a715bd88-7f93-4851-ad91-6321e8c7138e" path="${solr.create}" config-ref="SOLR_HTTPS_Configuration" />
 				<error-handler >
 					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0765c6ba-7edb-439f-b40a-31e65e75dbff" type="ANY">
 						<logger level="INFO" doc:name="Logger" doc:id="39ee74db-41dd-4796-98a9-b2796ac69def" message="Exception occurred while creating/updating Troop in SOLR | Processor level"/>
@@ -66,7 +66,8 @@ output application/json
 	</flow>
 	<flow name="publishFlow" doc:id="516bf8f0-be84-4ba3-b6de-092a625a74f2" >
 		<try doc:name="Try" doc:id="e18d5f61-6bc2-4635-8b1d-a4aff0a0c58d" >
-			<anypoint-mq:publish doc:name="Publish Data to Queue" doc:id="f46d1ebf-5081-49bf-b353-c91e9c03e7ae" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.queue}" />
+			<anypoint-mq:publish doc:name="Publish Data to Queue" doc:id="f46d1ebf-5081-49bf-b353-c91e9c03e7ae" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.queue}" >
+			</anypoint-mq:publish>
 			<error-handler >
 				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4ee05449-aebd-4217-b904-8198b335d497" type="ANY">
 					<logger level="INFO" doc:name="Logger" doc:id="09cd7855-e6e0-4678-b6b7-7cf43068ac25" message="Error occurred while publishing data to queue | Processor Level"/>
@@ -94,8 +95,8 @@ output application/json
 output application/json
 ---
 {
-  status: "SUCCESS",
-  message: "Records/Record has been succesfully published to the Queue"
+  status: "Success",
+  statusMessage: "Records enqueued"
 }]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
@@ -107,7 +108,9 @@ output application/json
 	</flow>
 	<flow name="publishToErrorQueueFlow" doc:id="dc948a8f-acff-4153-972f-b8a4a92c1fa3" >
 		<try doc:name="Try" doc:id="61b320c3-f1d6-4702-8c5f-2ccb0b3d6ae3" >
-			<anypoint-mq:publish doc:name="Publish Data to Error Queue" doc:id="18e109fd-50f8-4e0e-9be0-8347f5b53d27" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.error.queue}" />
+			<anypoint-mq:publish doc:name="Publish Data to Error Queue" doc:id="18e109fd-50f8-4e0e-9be0-8347f5b53d27" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.error.queue}" >
+				<ee:repeatable-file-store-stream inMemorySize="2048" />
+			</anypoint-mq:publish>
 			<error-handler>
 				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d515bd6d-0d48-455c-b909-bb9c4d7ec472" type="ANY">
 					<logger level="INFO" doc:name="Logger" doc:id="cef66413-f94d-4603-9054-e73a1dab7b03" message="Error while publishing data to Error queue | Processor Level" />

@@ -197,7 +197,7 @@ payload]]></ee:set-payload>
         </error-handler>
     </flow>
     <flow name="post:\sfdc\v1\case\create:application\json:gsusa-troop-api-s-config">
-        <flow-ref doc:name="createCaseFlow" doc:id="0c9e2cfb-27a5-47c2-a268-16a24035fb96" name="createCaseFlow" />
+        <flow-ref doc:name="publishCasehFlow" doc:id="0c9e2cfb-27a5-47c2-a268-16a24035fb96" name="publishCasehFlow" />
         <error-handler>
             <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7141debd-1723-48b5-9c07-0eb3ce7d4683">
                 <set-variable value="404" doc:name="httpStatus" doc:id="608e6e29-0f26-4108-a165-8bfd85a0b585" variableName="httpStatus" />

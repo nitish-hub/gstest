@@ -16,16 +16,16 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 	<apikit:config name="gsusa-troop-api-s-config" raml="gsusa-troop-api-s.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
 	
 	<http:listener-config name="GlobalHttpsConfig" doc:name="HTTP Listener config" doc:id="a22d41f9-0a44-4c78-9b3f-406ace3be498" >
-		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
+		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS" connectionIdleTimeout="${https.global.timeout}">
 			<tls:context >
-				<tls:key-store type="jks" path="keystore.jks" alias="selfsigned" keyPassword="${keystore.password}" password="${keystore.password}" />
+				<tls:key-store type="jks" path="${keystore.path}" alias="${keystore.alias}" keyPassword="${keystore.password}" password="${keystore.password}"/>
 			</tls:context>
 
 		</http:listener-connection>
 	</http:listener-config>
 	<configuration-properties doc:name="Configuration properties" doc:id="02b7616f-a57a-481a-b664-bfef0ce18536" file="config-${mule.env}.properties" />
-	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="6d00ebcf-8b71-41ea-848f-d66ed2fc9720" >
-		<http:request-connection protocol="HTTPS" host="${solr.url}" >
+	<http:request-config name="SOLR_HTTPS_Configuration" doc:name="HTTP Request configuration" doc:id="6d00ebcf-8b71-41ea-848f-d66ed2fc9720" >
+		<http:request-connection protocol="HTTPS" host="${solr.url}" connectionIdleTimeout="${https.solr.timeout}">
 			<reconnection >
 				<reconnect />
 			</reconnection>
@@ -49,10 +49,10 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 		<salesforce:cached-basic-connection username="${sfdc.username}" password="${sfdc.password}" securityToken="${sfdc.securityToken}" url="${sfdc.authURL}" />
 	</salesforce:sfdc-config>
 	
-	<http:request-config name="SFDC_Case_Create_Request_config" doc:name="HTTP Request configuration" doc:id="0a4867d1-7fa5-4b73-9e5f-029d1c902514" >
-		<http:request-connection protocol="HTTPS" host="${sfdc.case.create.host}" />
+	<http:request-config name="CASE_HTTPS_Request_configuration" doc:name="HTTP Request configuration" doc:id="0a4867d1-7fa5-4b73-9e5f-029d1c902514" >
+		<http:request-connection protocol="HTTPS" host="${sfdc.case.create.host}" connectionIdleTimeout="${https.case.timeout}"/>
 	</http:request-config>
 	<os:object-store name="Auth_Token_Object_store" doc:name="Object store" doc:id="4ef8a5f0-a835-4df3-834f-d0cc78b47833" persistent="false" entryTtl="1" entryTtlUnit="DAYS" expirationInterval="30" />
-	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="2f672ea6-117e-4245-87ea-f61042726888" flowRef="gsusa-troop-api-s-main" />
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="9a29c686-9341-473d-b398-a89dcc00ab14" flowRef="gsusa-troop-api-s-main" />
 
 </mule>
