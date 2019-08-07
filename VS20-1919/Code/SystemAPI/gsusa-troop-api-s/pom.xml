@@ -34,10 +34,7 @@
                 <environment>GSMULEPU-TEST</environment>
                 <properties>
                          <key>value</key>
-                         <env></env>
-						 <client_id></client_id>
-						 <client_secret></client_secret>
-						 <autodiscovery.id></autodiscovery.id>
+                         <env>TEST</env>
                 </properties>
                 </cloudHubDeployment>
 				<classifier>mule-application</classifier>
