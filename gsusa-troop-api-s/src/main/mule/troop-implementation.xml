@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+	<flow name="loadTroopFlow" doc:id="08a73f07-a517-455c-bbe9-0ecd31eb35de" >
+		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="fba8f7ed-b112-4de9-b2c2-219b584a1a26" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.queue}"/>
+		<foreach doc:name="For Each" doc:id="9ac55208-90f0-4b39-a182-78d95f0ab5c6" collection="#[payload]" batchSize="${batch.size}">
+				<ee:transform doc:name="Transform Message" doc:id="2b44e78f-7042-4d2f-84d0-98879a8dd95a" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+				<try doc:name="Try" doc:id="614df60e-f703-4fdc-9f99-a003a5ad5a80" >
+				<http:request method="POST" doc:name="Create Troop Request" doc:id="a715bd88-7f93-4851-ad91-6321e8c7138e" path="${solr.create}" config-ref="SOLR_HTTPS_Configuration" />
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0765c6ba-7edb-439f-b40a-31e65e75dbff" type="ANY">
+						<logger level="INFO" doc:name="Logger" doc:id="39ee74db-41dd-4796-98a9-b2796ac69def" message="Exception occurred while creating/updating Troop in SOLR | Processor level"/>
+						<ee:transform doc:name="Transform Message" doc:id="0a3a916c-7182-487e-8767-de69c42f2171" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"Troop",
+	"InstanceID": "Troop123",
+	"CreationDate": now(),
+	"ErrorCode": error.errorType.identifier, 
+	"ErrorMessage": error.cause.message, 
+	"Payload" : payload
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<flow-ref doc:name="Flow Reference" doc:id="865f8309-ea52-400c-b9fe-95cabe6c5a0a" name="publishToErrorQueueFlow"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			<logger level="INFO" doc:name="Logger" doc:id="32c90017-35d0-4d49-ad8c-61613ce5e03a" message="#['Successfully created/updated Troop data in SOLR for iteration ' ++ vars.counter as String]" />
+			</foreach>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="51d70727-4cb0-490b-9bb2-b261a28ff1ac" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="ac4287d6-f6ed-4471-8d4e-405f80d1ff6c" message="Exception occurred while POST request | Flow level"/>
+				<ee:transform doc:name="Transform Message" doc:id="b31e4213-828f-4602-8058-fc52611cad8c">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"Troop",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="a009be42-f46c-4884-b5b9-99531115eeeb" message="#[payload]"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="publishFlow" doc:id="516bf8f0-be84-4ba3-b6de-092a625a74f2" >
+		<try doc:name="Try" doc:id="e18d5f61-6bc2-4635-8b1d-a4aff0a0c58d" >
+			<anypoint-mq:publish doc:name="Publish Data to Queue" doc:id="f46d1ebf-5081-49bf-b353-c91e9c03e7ae" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.queue}" >
+			</anypoint-mq:publish>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="4ee05449-aebd-4217-b904-8198b335d497" type="ANY">
+					<logger level="INFO" doc:name="Logger" doc:id="09cd7855-e6e0-4678-b6b7-7cf43068ac25" message="Error occurred while publishing data to queue | Processor Level"/>
+					<ee:transform doc:name="Transform Message" doc:id="26264a4e-59ac-4cf0-8dd4-b00ebdea8aca" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"Troop",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="INFO" doc:name="Logger" doc:id="3f3bdedb-3712-4178-a3eb-2d55edb743df" message="#[payload]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="1e00befb-9136-4c2c-9cd7-270c33a0581f">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Success",
+  statusMessage: "Records enqueued"
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fde8278b-9423-4f84-8373-59f8c7a5b9f0" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="ba6b6fc9-f676-42de-afd4-2c5cdfc15014" message="Error occurred while publishing data to queue | Flow Level"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="publishToErrorQueueFlow" doc:id="dc948a8f-acff-4153-972f-b8a4a92c1fa3" >
+		<try doc:name="Try" doc:id="61b320c3-f1d6-4702-8c5f-2ccb0b3d6ae3" >
+			<anypoint-mq:publish doc:name="Publish Data to Error Queue" doc:id="18e109fd-50f8-4e0e-9be0-8347f5b53d27" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.error.queue}" >
+				<ee:repeatable-file-store-stream inMemorySize="2048" />
+			</anypoint-mq:publish>
+			<error-handler>
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="d515bd6d-0d48-455c-b909-bb9c4d7ec472" type="ANY">
+					<logger level="INFO" doc:name="Logger" doc:id="cef66413-f94d-4603-9054-e73a1dab7b03" message="Error while publishing data to Error queue | Processor Level" />
+					<ee:transform doc:name="Transform Message" doc:id="1396ac8a-9b5c-4da0-b82f-0e708c20f546">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"Troop",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="INFO" doc:name="Logger" doc:id="912aa09c-c691-41a3-8156-a2343c0b7d80" message="#[payload]" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="005cefed-94cf-4836-ab67-b59753b4b009" message="#['Published data to Error queue' ++ ' ' ++ &quot;${anypoint.mq.error.queue}&quot;]"/>
+		<error-handler>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="866a6769-3d6e-43b6-b060-9f1582f8a8a2" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="b4169ea2-5280-4ad1-b1f7-d4b88c038d72" message="Error while publishing data to Error queue | Flow Level" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

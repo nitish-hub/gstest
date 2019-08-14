@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="loadSchoolFlow" doc:id="4f5afc1a-8050-44a4-b21d-ef29a6b723e5" >
+		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="8bfa86cb-4913-429a-8922-f816aadb0898" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.schoolmq.queue}"/>
+		<foreach doc:name="For Each" doc:id="c7a0b782-22b7-4ea0-9753-b119ac81b943" >
+			<ee:transform doc:name="Transform Message" doc:id="9ffdee08-3298-4ba7-b4dd-cdb3f87f4385" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+[
+payload
+
+]]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<logger level="INFO" doc:name="Logger" doc:id="526caa5c-6a82-4355-a1fa-fe99eeaed506" message="#[payload]"/>
+			<try doc:name="Try" doc:id="518e718b-6d05-49d8-ba3e-e893f36887c6" >
+				<http:request method="POST" doc:name="Request" doc:id="d92cb01d-c14d-4f1e-bf90-c83a5b3930e7" config-ref="SOLR_HTTPS_Configuration" path="${solr.school}">
+					<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"commit" : "true"
+}]]]></http:query-params>
+				</http:request>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="eae98f10-f6e1-4019-874f-a538783c9be8" >
+						<logger level="INFO" doc:name="Logger" doc:id="92e008a8-1360-4748-83a6-3e7be415c16d" message="Exception occurred while creating/updating School in SOLR | Processor level"/>
+						<ee:transform doc:name="Transform Message" doc:id="d4052f97-9f4f-4edc-9c98-e50bf955cef0" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"School",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<flow-ref doc:name="callPublishToSchoolErrorQueue" doc:id="4fd2cab9-fd01-40a3-b6d9-0d484cf58e7b" name="publishToSchoolErrorQueue"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			<logger level="INFO" doc:name="Logger" doc:id="d1674645-f678-45f9-9210-dbf16ce70bb0" message="#['School data processed for iteration ' ++ vars.counter as String]"/>
+		</foreach>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="77a163ea-d2ce-431c-8e74-a5a7adb05b4c" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="0b87b630-5244-47b5-b894-0c7e28a404bd" message="Exception occurred while POST request | Flow level"/>
+				<ee:transform doc:name="Transform Message" doc:id="453d2fdd-c67f-433a-b1cd-1ea68af8265f" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"School",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="2d0d7aef-f45b-4e82-9a7b-fe19383cb2b9" message="#[payload]"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="publishSchoolFlow" doc:id="c3ef8229-63c3-49e9-aaff-f10708c2f777" >
+		<try doc:name="Try" doc:id="3c67956b-75c5-4d15-b2a6-1c41acbe9905" >
+			<anypoint-mq:publish doc:name="Publish" doc:id="bd7f0edd-04e0-4cd9-9824-67b3210b86fe" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.schoolmq.queue}"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7ca66127-6d47-4692-804b-67d8664e8d07" type="ANY">
+					<logger level="INFO" doc:name="Logger" doc:id="2a85df80-c4f9-4ed9-84f2-d7e782479c6f" message="Error occurred while publishing data to queue | Processor Level"/>
+					<ee:transform doc:name="Transform Message" doc:id="185de9a9-4844-4b00-b63a-46d07cd08589" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"School",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="INFO" doc:name="Logger" doc:id="cccfdc46-12c9-48d7-a8d1-d1ea30704d7d" message="#[payload]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="db829152-f466-416d-b91a-ae75cea6e379" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+  status: "Success",
+  statusMessage: "Records enqueued"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e8c8a230-d278-48e5-a4c3-89b3cdbbf306" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="e8e3831b-70bf-45c3-a245-96cfee6cf76d" message="Error occurred while publishing data to queue | Flow Level"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="publishToSchoolErrorQueue" doc:id="bb09fbfa-9057-4f4f-8bc0-d7f7ad27be2d" >
+		<try doc:name="Try" doc:id="bb4dfd4c-d562-407f-b7b9-11d2d4fe4937" >
+			<anypoint-mq:publish doc:name="Publish" doc:id="d7c04841-f408-46c4-9204-e75db06e3b8d" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.schoolmq.error.queue}" />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="8cda6f2f-9337-43cf-8377-dec56c9b3813" >
+					<logger level="INFO" doc:name="Logger" doc:id="8304b603-ea92-47f8-acaf-c36312936a3d" message="Error while publishing data to Error queue | Processor Level"/>
+					<ee:transform doc:name="Transform Message" doc:id="df77fc0d-9e59-4c61-98b1-03c2ad7f00de" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"School",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="INFO" doc:name="Logger" doc:id="9dfcd4b2-8621-4d4c-b8a0-e510a50ce2b4" message="#[payload]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="e8e52c60-4617-4f0a-ae71-e8ace3e60b68" message="#['Published data to Error queue' ++ ' ' ++ &quot;${anypoint.schoolmq.error.queue}&quot;]"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="34ad2499-4def-416a-8d38-407572a7f653" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="82af75ba-2d2d-41ef-bafd-7d9e3334fe4c" message="Error while publishing data to Error queue | Flow Level"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

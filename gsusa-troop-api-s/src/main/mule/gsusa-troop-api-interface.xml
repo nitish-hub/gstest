@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    <flow name="gsusa-troop-api-s-main">
+        <http:listener path="/api/*" config-ref="GlobalHttpsConfig">
+            <http:response statusCode="#[vars.httpStatus default 200]" />
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="gsusa-troop-api-s-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="03d81542-2e76-440e-b624-8730b977ff61">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"UIToSFDCCreateCase",
+    "CreationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "ErrorDescription": error.description,  
+    "ErrorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "ErrorCause":error.cause.message,
+    "Action":"Please check all parameters and payload information then retry",
+    "StatusCode" :error.cause.errorMessage.attributes.statusCode,
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[400]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="d4a0daa5-2b53-4aa2-8fb0-912bb15c0b38">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"UIToSFDCCreateCase",
+    "CreationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "ErrorDescription": error.description,  
+    "ErrorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "ErrorCause":error.cause.message,
+    "Action":"Please check the API url and retry",
+    "StatusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[404]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd" doc:id="f3b6df01-dabd-434f-bf69-148b678ddbfb">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"UIToSFDCCreateCase",
+    "CreationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "ErrorDescription": error.description,  
+    "ErrorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "ErrorCause":error.cause.message,
+    "Action": "Please check the called REST Method and retry",
+    "StatusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[405]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"UIToSFDCCreateCase",
+    "CreationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "ErrorDescription": error.description,  
+    "ErrorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "ErrorCause":error.cause.message,
+    "ErrorMessage":error.cause.errorMessage.payload,
+    "StatusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[406]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"UIToSFDCCreateCase",
+    "CreationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "ErrorDescription": error.description,  
+    "ErrorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "ErrorCause":error.cause.message,
+    "ErrorMessage":"Please check the payload media or content type and retry",
+    "StatusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[415]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"UIToSFDCCreateCase",
+    "CreationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "ErrorDescription": error.description,  
+    "ErrorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "ErrorCause":error.cause.message,
+    "ErrorMessage":error.cause.errorMessage.payload,
+    "StatusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus"><![CDATA[501]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c53112f3-7273-473e-8908-8e1cd1fe8200" type="ANY">
+                <logger level="INFO" doc:name="Logger" doc:id="1e2aa9ef-d96e-48ea-881f-21844aaa41f6" message="ANY error captured in APIKIT main flow" />
+                <ee:transform doc:name="Transform Message" doc:id="051c3306-00bc-417b-a8b8-dc284c7e2d30">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"UIToSFDCCreateCase",
+    "CreationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "ErrorDescription": error.description,  
+    "ErrorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "ErrorCause":error.cause.message,
+    "ErrorMessage":error.cause.errorMessage.payload,
+    "StatusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="gsusa-troop-api-s-console">
+        <http:listener path="/console/*" config-ref="GlobalHttpsConfig">
+            <http:response statusCode="#[vars.httpStatus default 200]" />
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="gsusa-troop-api-s-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\solr\v1\troops\load:application\json:gsusa-troop-api-s-config">
+        <flow-ref doc:name="callPublishFlow" doc:id="b7cfdce6-54a4-4f6b-9075-6f28491e8d0b" name="publishFlow" />
+        <ee:transform doc:name="Transform Message" doc:id="3b07ab19-bcfe-48de-99f6-71a9f0def1ea">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1fa8f450-e77d-42a5-b7cb-21827baa6c8b" type="ANY">
+                <logger level="INFO" doc:name="Logger" doc:id="8dae6a24-83cb-4ebb-8b39-3932156fb958" message="Exception occurred in the Publish Flow | Flow level | Interface" />
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="post:\sfdc\v1\case\create:application\json:gsusa-troop-api-s-config">
+        <flow-ref doc:name="publishCasehFlow" doc:id="0c9e2cfb-27a5-47c2-a268-16a24035fb96" name="publishCasehFlow" />
+        <error-handler>
+            <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7141debd-1723-48b5-9c07-0eb3ce7d4683">
+                <set-variable value="404" doc:name="httpStatus" doc:id="608e6e29-0f26-4108-a165-8bfd85a0b585" variableName="httpStatus" />
+                <ee:transform doc:name="Transform Message" doc:id="f95aa353-b8dc-482b-bc11-b6b01f69b7ba">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+    "InterfaceCode":"UIToSFDCCreateCase",
+	"InstanceID": "Case Create",
+    "CreationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "ErrorDescription": error.description,  
+    "ErrorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "ErrorCause":error.cause.message,
+    "ErrorMessage":error.cause.errorMessage.payload,
+    "StatusCode" :error.cause.errorMessage.attributes.statusCode
+
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+    <flow name="post:\solr\v1\org\load:application\json:gsusa-troop-api-s-config">
+		<flow-ref doc:name="callPublishOrgFlow" doc:id="66fa70c0-398a-47db-aa39-4e389b5dc790" name="publishOrgFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="af0f733a-4100-4f13-9954-092a0f64a9b4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="dbb2a7ff-2548-4cb4-b4ee-75c44aa1fef2" >
+				<logger level="INFO" doc:name="Logger" doc:id="cee9758c-96ff-48b3-9b8c-31a82c7fe7dc" />
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+    <flow name="post:\solr\v1\School\load:application\json:gsusa-troop-api-s-config">
+		<flow-ref doc:name="callPublishSchoolFlow" doc:id="5b9a259c-ae30-4954-b03a-e6d02ebba512" name="publishSchoolFlow"/>
+		<ee:transform doc:name="Transform Message" doc:id="a2aaaa0a-73b2-46be-9bcc-0afee5e06286" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1470ea26-1912-4db8-934a-fa01f9478782" >
+				<logger level="INFO" doc:name="Logger" doc:id="30ac051a-73f4-4242-b0f9-fd3ac427b381" message="Exception occurred in the Publish Flow | Flow level | Interface"/>
+			</on-error-propagate>
+		</error-handler>
+    </flow>
+    <error-handler name="globalErrorHandler" doc:id="0be92fa6-f512-4e71-a064-8c02c1ab4426">
+        <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="0acc06bf-04eb-4c87-85df-9be26bea8f17" type="ANY">
+            <logger level="INFO" doc:name="Logger" doc:id="7e5f8253-ca6a-4616-8e40-70b0d845efb7" message="Global Error Handler invoked" />
+        </on-error-propagate>
+    </error-handler>
+</mule>
