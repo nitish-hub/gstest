@@ -1,0 +1,148 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="SFDCOrderDataType" format="json">
+      <types:shape format="weave" example="examples/SFDCOrderDataExample.json"><![CDATA[%dw 2.0
+
+type SFDCOrderDataType = {|
+  orders: Array<{|    SequenceId: String,     OrderedBy: String,     OrderDate: String,     BillingAddress: {|      Street: String,       City: String,       State: String,       Country: String,       PostalCode: String    |},     ShippingAddress: {|      Street: String,       City: String,       State: String,       Country: String,       PostalCode: String    |},     OrderAmount: Number {"typeId": "double"},     RemainingBalance: Number {"typeId": "double"},     HybrisId: String,     OrderLines: Array<{|      LineNumber: String,       LineHybrisId: String,       Status: String,       Price: Number {"typeId": "double"},       OrderedFor: String,       Council: String,       LastPaymentDate: String,       EventDate: String,       ProductId: String,       Troop: String    |}>
+  |}>
+|} {"example": "{\"orders\":[{\"SequenceId\":\"1\",\"OrderedBy\":\"003000164\",\"OrderDate\":\"2019-07-15\",\"BillingAddress\":{\"Street\":\"525 W Monroe, Suite 500\",\"City\":\"Chicago\",\"State\":\"IL\",\"Country\":\"US\",\"PostalCode\":\"60661\"},\"ShippingAddress\":{\"Street\":\"420 5th Ave\",\"City\":\"New York\",\"State\":\"NY\",\"Country\":\"US\",\"PostalCode\":\"10018\"},\"OrderAmount\":37.50,\"RemainingBalance\":21.00,\"HybrisId\":\"100009\",\"OrderLines\":[{\"LineNumber\":\"1\",\"LineHybrisId\":\"200010\",\"Status\":\"Partially Paid\",\"Price\":37.50,\"OrderedFor\":\"003000165\",\"Council\":\"278\",\"LastPaymentDate\":\"2019-07-15\",\"EventDate\":\"2019-07-15\",\"ProductId\":\"Membership-001\",\"Troop\":\"Troop 1234\"}]}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="SAPOrderPayload" format="json">
+      <types:shape format="weave" example="examples/SAPOrderPayload-3.json"><![CDATA[%dw 2.0
+
+type SAPOrderPayload = {|
+  commerceOrderNumber: String, 
+  deliveryOrderGroups: Array<{|    entries: Array<{|      contactInfo: {|        assignedCouncil: String,         troopAssignments: Array<{|          assignedTroop: String,           assignedTroopStatus: String        |}>, 
+        contactType: String, 
+        crmGlobalCustomerID: String, 
+        customer: String
+      |}, 
+      entryNumber: Number {"typeId": "int"}, 
+      product: {|
+        netSuiteItem: String, 
+        netSuiteGLLocation: String, 
+        startDate: String, 
+        endDate: String, 
+        membershipType: String, 
+        councilId: String, 
+        duration: String, 
+        serviceUnit: String, 
+        ActivityType: String, 
+        requiredAge: String, 
+        requiredGradeType: String, 
+        physicalLocation: String, 
+        sessionID: String, 
+        code: String
+      |}, 
+      quantity: Number {"typeId": "int"}, 
+      totalPrice: {|
+        currencyIso: String, 
+        value: Number {"typeId": "int"}
+      |}, 
+      paymentMode: String, 
+      fundingSource: String
+    |}>, 
+    totalPriceWithTax: {|
+      currencyIso: String, 
+      formattedValue: String, 
+      priceType: String, 
+      value: Number {"typeId": "int"}
+    |}
+  |}>, 
+  orderDiscounts: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  paymentInfo: {|
+    accountHolderName: String, 
+    billingAddress: {|
+      country: {| isocode: String |}, 
+      defaultAddress: String, 
+      id: String, 
+      line1: String, 
+      postalCode: String, 
+      region: {| isocode: String |}, 
+      town: String
+    |}, 
+    cardNumber: String, 
+    cardType: {|
+      code: String, 
+      name: String
+    |}, 
+    defaultPayment: String, 
+    expiryMonth: String, 
+    expiryYear: String, 
+    id: String, 
+    saved: String, 
+    subscriptionId: String
+  |}, 
+  productDiscounts: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  subTotal: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  totalDiscounts: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  totalItems: Number {"typeId": "int"}, 
+  totalPrice: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  totalPriceWithTax: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  totalTax: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  user: {|
+    name: String, 
+    uid: String, 
+    crmGlobalCustomerID: String
+  |}, 
+  created: String
+|} {"example": "{\"commerceOrderNumber\":\"00002001\",\"deliveryOrderGroups\":[{\"entries\":[{\"contactInfo\":{\"assignedCouncil\":\"Council1000\",\"troopAssignments\":[{\"assignedTroop\":\"Troop123\",\"assignedTroopStatus\":\"REQUEST\"}],\"contactType\":\"GIRL\",\"crmGlobalCustomerID\":\"GLOBAL2000-a\",\"customer\":\"false\"},\"entryNumber\":0,\"product\":{\"netSuiteItem\":\"HORSECAMP450\",\"netSuiteGLLocation\":\"\",\"startDate\":\"01012019\",\"endDate\":\"12312019\",\"membershipType\":\"GIRLMEMBERSHIP\",\"councilId\":\"Council1000\",\"duration\":\"365\",\"serviceUnit\":\"\",\"ActivityType\":\"\",\"requiredAge\":\"\",\"requiredGradeType\":\"\",\"physicalLocation\":\"\",\"sessionID\":\"\",\"code\":\"M01\"},\"quantity\":1,\"totalPrice\":{\"currencyIso\":\"USD\",\"value\":25},\"paymentMode\":\"paymentCard\",\"fundingSource\":\"\"},{\"contactInfo\":{\"assignedCouncil\":\"Council1000\",\"troopAssignments\":[{\"assignedTroop\":\"Troop123\",\"assignedTroopStatus\":\"REQUEST\"}],\"crmGlobalCustomerID\":\"GLOBAL2000-a\",\"customer\":\"false\"},\"entryNumber\":1,\"product\":{\"netSuiteItem\":\"HORSECAMP450\",\"netSuiteGLLocation\":\"\",\"startDate\":\"01012019\",\"endDate\":\"12312019\",\"membershipType\":\"GIRLMEMBERSHIP\",\"councilId\":\"Council1000\",\"duration\":\"365\",\"serviceUnit\":\"\",\"ActivityType\":\"\",\"requiredAge\":\"\",\"requiredGradeType\":\"\",\"physicalLocation\":\"\",\"sessionID\":\"\",\"code\":\"council_1000_Girl_Annual\"},\"quantity\":1,\"totalPrice\":{\"currencyIso\":\"USD\",\"value\":3},\"paymentMode\":\"financialAid\",\"fundingSource\":\"UnitedWay\"}],\"totalPriceWithTax\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$28.00\",\"priceType\":\"BUY\",\"value\":28}}],\"orderDiscounts\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$0.00\",\"priceType\":\"BUY\",\"value\":0},\"paymentInfo\":{\"accountHolderName\":\"Gaurav\",\"billingAddress\":{\"country\":{\"isocode\":\"US\"},\"defaultAddress\":\"false\",\"id\":\"8796125888535\",\"line1\":\"223 E Concord Street\",\"postalCode\":\"32801\",\"region\":{\"isocode\":\"US-FL\"},\"town\":\"sanford\"},\"cardNumber\":\"************0001\",\"cardType\":{\"code\":\"visa\",\"name\":\"Visa\"},\"defaultPayment\":\"false\",\"expiryMonth\":\"12\",\"expiryYear\":\"2021\",\"id\":\"8796125855786\",\"saved\":\"false\",\"subscriptionId\":\"testemail1@mailinator.com_2dd83c63-68f1-4d98-9035-81a96890638c\"},\"productDiscounts\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$0.00\",\"priceType\":\"BUY\",\"value\":0},\"subTotal\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$28.00\",\"priceType\":\"BUY\",\"value\":28},\"totalDiscounts\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$0.00\",\"priceType\":\"BUY\",\"value\":0},\"totalItems\":2,\"totalPrice\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$28.00\",\"priceType\":\"BUY\",\"value\":28},\"totalPriceWithTax\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$28.00\",\"priceType\":\"BUY\",\"value\":28},\"totalTax\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$0.00\",\"priceType\":\"BUY\",\"value\":0},\"user\":{\"name\":\"Jonathan Damron\",\"uid\":\"testemail1@mailinator.com\",\"crmGlobalCustomerID\":\"note this will have global id associated with the buying gscustomer account.\"},\"created\":\"2019-06-27T21:16:25+0000\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#de950c9d-7327-4c9c-af9b-f55584759499">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="SAPOrderPayload"/>
+        </types:message>
+      </types:input-event>
+      <types:output-event>
+        <types:variables>
+          <types:variable name="SFDCOrderData" type="SFDCOrderDataType"/>
+        </types:variables>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#028b9a2f-f299-4442-8fa5-4ad37b9ed8e9"/>
+</types:mule>

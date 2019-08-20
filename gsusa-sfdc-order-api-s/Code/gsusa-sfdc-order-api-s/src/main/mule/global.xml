@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+	<http:listener-config name="Global_Listener_Config" doc:name="HTTP Listener config" doc:id="e0cbd3e9-ab14-4aaf-b5af-6bd9d7b8ff0e" >
+		<http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS" connectionIdleTimeout="${HTTPListener.timeout}">
+ 			<tls:context >
+				<tls:key-store type="jks" path="${keystore.path}" alias="${keystore.alias}" keyPassword="${keystore.password}" password="${keystore.password}"/>
+			</tls:context>
+		</http:listener-connection>
+	</http:listener-config>
+    <apikit:config name="gsusa-sfdc-order-api-s-config" raml="gsusa-sfdc-order-api-s.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+ 	<configuration-properties doc:name="Configuration properties" doc:id="50f5944a-8d1f-408e-b14a-20b6720ddfea" file="config-${env}.properties" />
+ 	<http:request-config name="Token_Request_configuration" doc:name="HTTP Request configuration" doc:id="ade917c4-c328-47ae-a0b6-5a599fb8deb5" >
+		<http:request-connection host="${token.request.url}" protocol="HTTPS" connectionIdleTimeout="${HTTPRequestor.timeout}">
+			<reconnection >
+				<reconnect frequency="${HTTPRequestor.retry.interval}" count="${HTTPRequestor.retry.count}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="SFDC_Order_Request_configuration" doc:name="HTTP Request configuration" doc:id="d4fe1e9b-b275-4278-b2d5-e20e91ffab15" >
+		<http:request-connection host="#[vars.SFDCOrderApiUrl]" protocol="HTTPS" connectionIdleTimeout="${HTTPRequestor.timeout}">
+			<reconnection >
+				<reconnect frequency="${HTTPRequestor.retry.interval}" count="${HTTPRequestor.retry.count}" />
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<os:object-store name="Access_Token_Object_store" doc:name="Object store" doc:id="95025788-9bb0-4bfd-90db-db75d0f705cd" persistent="false" entryTtl="${os.entry.ttl}" entryTtlUnit="HOURS" expirationInterval="${os.entry.expiration.interval}"/>
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="aac8c070-2cd5-486a-9d0a-2ca43b22aa0e" flowRef="gsusa-sfdc-order-api-s-main" />
+</mule>

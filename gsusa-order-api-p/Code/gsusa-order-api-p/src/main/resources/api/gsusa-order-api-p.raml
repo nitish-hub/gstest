@@ -1,0 +1,44 @@
+#%RAML 1.0
+title: gsusa-order-api-p
+
+traits: 
+  client-id-required:
+      headers:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+
+types:
+  orderData: !include dataTypes/orderData.raml
+  success: !include dataTypes/successResponse.raml
+  error: !include dataTypes/errorResponse.raml
+
+/v1:
+  /order:
+    /create:
+      is: [client-id-required]
+      post:
+        description: |
+          Create orders in SFDC and Netsuite.
+        body:
+          application/json:
+            type: orderData
+            example: !include examples/orderDataExample.json
+        responses:
+          201: 
+            body:
+              application/json:
+                type: success
+                example: |
+                  {
+                      "status": "Successfully created order in Salesforce"
+                  }
+          400:
+            body:
+              application/json:
+                type: error
+                example: |
+                  {
+                      "message": "Failed to create order in Salesforce"
+                  }                                  

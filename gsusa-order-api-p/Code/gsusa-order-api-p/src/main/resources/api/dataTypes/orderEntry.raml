@@ -1,0 +1,39 @@
+#%RAML 1.0 DataType
+
+type: object
+properties:
+  entries:
+    type: array
+    items: 
+      properties:
+        contactInfo:
+          type: object
+          properties:
+            assignedCouncil?: string | nil
+            troopAssignments:
+              type: array
+              items:
+                properties:
+                  assignedTroop?: string | nil
+                  assignedTroopStatus?: string | nil
+            contactType?: string | nil
+            crmGlobalCustomerID?: string | nil
+            customer?: string | nil
+        entryNumber?: integer | nil
+        product?: !include product.raml
+        quantity?: integer | nil
+        totalPrice?: 
+          type: object
+          properties:
+            currencyIso?: string | nil
+            value?: integer | nil
+        paymentMode?: string | nil
+        fundingSource?: string | nil
+  totalPriceWithTax?: !include price.raml
+  
+            
+                
+                
+
+        
+

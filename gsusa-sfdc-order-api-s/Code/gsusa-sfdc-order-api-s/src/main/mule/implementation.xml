@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+   <flow name="createOrderSFDCFlow" doc:id="46391d55-40b3-40ba-9ca8-9a71e4fa5b36">
+      <logger level="INFO" doc:name="Logger" doc:id="8dac7d76-6eb9-41e1-8085-93ab326e35c9" message="Start Order Creation Flow" />
+      <set-variable value="#[payload]" doc:name="Set Variable" doc:id="a5cd0f5f-5b54-4211-82df-cd6500d15837" variableName="OrderData" />
+      <os:retrieve doc:name="Retrieve Token" doc:id="8a0e2144-e54c-4f52-bff5-f58230709b44" key="accessToken" objectStore="Access_Token_Object_store" target="SFDCAccessToken">
+         <os:default-value><![CDATA[#['DUMMY']]]></os:default-value>
+      </os:retrieve>
+      <os:retrieve doc:name="Retrieve URL" doc:id="310602d9-eaca-4094-8d1a-c6efba04e89e" key="orderApiUrl" target="SFDCOrderAPIUrl">
+         <os:default-value><![CDATA[#['DUMMY']]]></os:default-value>
+      </os:retrieve>
+      <choice doc:name="Is Token present in Object Store?" doc:id="d32181fa-0d14-4b38-b200-6c8e0781d9be">
+         <when expression="#[vars.SFDCAccessToken != 'DUMMY']">
+            <logger level="INFO" doc:name="Logger" doc:id="d7508253-da82-400a-94d5-842132cedba1" message="Token present already in Object Store" />
+         </when>
+         <otherwise>
+            <flow-ref doc:name="Call Token Generation Flow" doc:id="f2defe76-3075-415f-bc88-4aff90f31613" name="tokenGenerateFlow" />
+         </otherwise>
+      </choice>
+      <flow-ref doc:name="Call SFDC Order Creation" doc:id="71f9693b-b936-4631-998a-6454501d69b1" name="CreateOrderInSFDC" />
+      <ee:transform doc:name="Transform Message" doc:id="2a341790-13dc-4125-90a4-61ccb0874267">
+         <ee:message>
+            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status:"SUCCESS",
+	message:"Order created in Salesforce"
+}]]></ee:set-payload>
+         </ee:message>
+      </ee:transform>
+		<error-handler>
+         <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="524f5d79-ce6a-4d26-b9eb-840e6efc17ce" type="ANY">
+            <logger level="INFO" doc:name="Logger" doc:id="3262668b-3efb-492e-bc02-725dbdae6a97" message="Error while creating createOrderFlow | Flow Level" />
+            <logger level="INFO" doc:name="Logger" doc:id="bd90a4c2-80b3-427c-8543-a85c12036917" message="#[%dw 2.0 output application/json --- &quot;error response&quot;:{         &quot;interfacecode&quot;:&quot;Order&quot;,       &quot;creationdate&quot;:now(),       &quot;errordescription&quot;:error.cause.errorMessage.payload,       &quot;errortype&quot;:error.errorType.identifier,       &quot;errormessage&quot;:error.cause.message }]" />
+         </on-error-propagate>
+      </error-handler>
+   </flow>
+   <flow name="CreateOrderInSFDC" doc:id="b70b2baa-5fe7-4cc7-9e69-95a8248bf761">
+      <try doc:name="Try" doc:id="86ba2d80-44f4-4230-b82e-62f61e4ccbe9">
+         <http:request method="POST" doc:name="POST - SFDC" doc:id="bd6c9572-6432-4fe9-9dc1-b0539bc4e74f" config-ref="SFDC_Order_Request_configuration" path="${sfdc.order.api.path}" outputMimeType="application/json">
+            <http:body><![CDATA[#[vars.OrderData]]]></http:body>
+            <http:headers><![CDATA[#[output application/java
+---
+{
+	Authorization : vars.SFDCAccessToken
+}]]]></http:headers>
+         </http:request>
+         <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="871f0644-e1c4-4485-99e6-fd55400aa7fe" type="HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:RETRY_EXHAUSTED, HTTP:SECURITY, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, HTTP:UNSUPPORTED_MEDIA_TYPE, EXPRESSION, STREAM_MAXIMUM_SIZE_EXCEEDED">
+               <logger level="INFO" doc:name="Logger" doc:id="6fcf1733-cce6-434e-aade-fcabb026d777" message="Error occurred while creating Order in Salesforce | Processor Level" />
+            </on-error-propagate>
+            <on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c45d3fbe-6ffa-4371-9576-c02e247c06e1" type="HTTP:UNAUTHORIZED">
+               <flow-ref doc:name="Call token generate flow" doc:id="1f720652-e346-4d77-a177-caa2f4e2596b" name="tokenGenerateFlow" />
+               <os:retrieve doc:name="Retrieve Token" doc:id="251d94cd-a149-4c89-813d-2e6a6732055f" key="accessToken" objectStore="Access_Token_Object_store" target="SFDCAccessToken">
+                  <os:default-value><![CDATA[#['DUMMY']]]></os:default-value>
+               </os:retrieve>
+               <os:retrieve doc:name="Retrieve URL" doc:id="1873c49b-2efc-44a7-a8aa-6413b0b11491" key="orderApiUrl" target="SFDCOrderAPIUrl">
+                  <os:default-value><![CDATA[#['DUMMY']]]></os:default-value>
+               </os:retrieve>
+               <try doc:name="Try" doc:id="d96f873e-22fe-4697-9099-2902f4bd6438">
+                  <http:request method="POST" doc:name="POST - SFDC" doc:id="9a2c303d-3e86-48ab-a2b8-89c84ba72fd3" config-ref="SFDC_Order_Request_configuration" path="${sfdc.order.api.path}" outputMimeType="application/json">
+                     <http:body><![CDATA[#[vars.OrderData]]]></http:body>
+                     <http:headers><![CDATA[#[output application/java
+---
+{
+	Authorization : vars.SFDCAccessToken
+}]]]></http:headers>
+                  </http:request>
+                  <error-handler>
+                     <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7fadb647-8a9f-4647-91b4-7c30c4a74573">
+                        <logger level="INFO" doc:name="Logger" doc:id="164281b5-7702-4aec-9a41-dc4054e5dfed" message="Error occurred while retrying Order creation in Salesforce | Processor Level" />
+                     </on-error-propagate>
+                  </error-handler>
+               </try>
+            </on-error-continue>
+         </error-handler>
+      </try>
+      <error-handler>
+         <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c80755cc-28cc-4309-a3d7-4ed5d8b7335a" type="ANY">
+            <logger level="INFO" doc:name="Logger" doc:id="2e40402c-df5c-4653-a9bc-e862dc639a3d" message="Exception occurred while creating Order in Salesforce | Flow Level" />
+         </on-error-propagate>
+      </error-handler>
+   </flow>
+   <flow name="tokenGenerateFlow" doc:id="48e5954c-25d8-464f-9300-0c35754ad41c">
+      <try doc:name="Try" doc:id="12789310-ed9e-499d-9d46-f01c63c74fd2">
+         <http:request method="POST" doc:name="POST - SFDC Token" doc:id="76c2d81b-20ac-4b44-82e1-69d2c545a52a" config-ref="Token_Request_configuration" path="${token.request.path}">
+            <http:query-params><![CDATA[#[output application/java
+---
+{
+	grant_type : ${token.request.grantType},
+	client_id : ${sfdc.consumerKey},
+	client_secret : ${sfdc.consumerSecret},
+	username : ${sfdc.principal},
+	password : ${sfdc.password}
+}]]]></http:query-params>
+         </http:request>
+         <error-handler>
+            <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e0ab583a-343c-47a2-a3df-57e315b12a7e">
+               <logger level="INFO" doc:name="Logger" doc:id="546b3c0d-db06-4482-be2b-187903870c8e" message="Error occurred while generating token for accessing Order API | Processor level" />
+            </on-error-propagate>
+         </error-handler>
+      </try>
+      <ee:transform doc:name="Transform Message" doc:id="0131066b-2622-4300-9af1-b66eb4607e04">
+         <ee:message />
+         <ee:variables>
+            <ee:set-variable variableName="SFDCAccessToken"><![CDATA["Bearer " ++ payload.access_token]]></ee:set-variable>
+            <ee:set-variable variableName="SFDCOrderAPIUrl"><![CDATA[payload.instance_url replace "https://" with ""]]></ee:set-variable>
+         </ee:variables>
+      </ee:transform>
+      <choice doc:name="Token Generated?" doc:id="2bc54a0a-5177-4cfe-8186-cd1f7b66d243">
+         <when expression="#[vars.SFDCAccessToken != null]">
+            <logger level="INFO" doc:name="Logger" doc:id="72a63cf3-111f-4bae-b9fa-a94b9363f751" message="Token generated successfully." />
+            <os:store doc:name="Store Token" doc:id="75ffd4c0-6dda-460b-800e-5633195e8482" key="accessToken" objectStore="Access_Token_Object_store">
+               <os:value><![CDATA[#[vars.SFDCAccessToken]]]></os:value>
+            </os:store>
+            <os:store doc:name="Store URL" doc:id="7a10fb74-6b07-43db-896f-31d0fc4212f3" key="orderApiUrl">
+               <os:value><![CDATA[#[vars.SFDCOrderAPIUrl]]]></os:value>
+            </os:store>
+         </when>
+         <otherwise>
+            <logger level="INFO" doc:name="Logger" doc:id="8077ebeb-5b2b-45b6-9f93-28124c6ae49e" message="Token generation failed" />
+            <raise-error doc:name="Raise error" doc:id="f2e0869d-04f6-49ae-8409-67f1193e2d3b" type="TOKEN:GENERATION_FAILED" description="Token Generation failed for accessing Order API" />
+         </otherwise>
+      </choice>
+      <error-handler>
+         <on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="f0cfb42d-9c2c-4398-8d39-cf60138fdaed">
+            <logger level="INFO" doc:name="Logger" doc:id="de59371f-e4bd-4c2c-9e3b-d51252fd473f" message="Error occurred while generating token for accessing Order API | Flow level" />
+         </on-error-propagate>
+      </error-handler>
+   </flow>
+</mule>
