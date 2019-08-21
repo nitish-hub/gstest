@@ -1,0 +1,89 @@
+#%RAML 1.0 DataType
+
+#This file is located at dataTypes/InputRequest-data-type.raml
+
+type: object
+properties:
+  Register:
+    type: array
+    items:
+      properties:
+        crmGlobalCustomerID?: string
+        parentcrmGlobalCustomerID?: string
+        addcaregiver?: string
+        accountType?: string
+        recordTypeName?: string
+        registrationSequence?: string
+        contactType?: string
+        firstName?: string
+        lastName?: string
+        gender?: string
+        grade?: string
+        email?: string
+        birthDate?: string
+        mobilePhone?: string
+        phoneNumber?: string
+        nickname?: string
+        maidenName?: string
+        mailingAddress?:
+          type: object
+          properties:
+            mailingStreet?: string
+            mailingCity?: string
+            mailingState?: string
+            mailingPostalCode?: string
+            mailingCountry?: string
+        billingAddress?:
+          type: object
+          properties:
+            billingStreet?: string
+            billingCity?: string
+            billingState?: string
+            billingPostalCode?: string
+            billingCountry?: string
+        race?: string
+        ethnicity?: string
+        maritalStatus?: string
+        university?: string
+        role?: string
+        businessAccountName?: string
+        preferredBillingCounty?: string
+        programGradeLevel?: string
+        website?: string
+        gsCustomerUid?: string
+        assignedTroopStatus?: string
+        assignedTroop?: string
+        assignedCouncil?: string
+        assignedCouncilStatus?: string
+        customer?: string
+        volunteerPosition?: string
+        volunteerStatus?: string
+        paymentType?: string
+        alumni?: string 
+        productCode?: string
+        paymentMode?: string
+        bundleCode?: string
+
+  Caregivers:
+    type: array
+    required: false
+    items:
+      properties:
+        crmGlobalCustomerID?: string
+        parentcrmGlobalCustomerID?: string
+        contactType?: string
+        customer?: string
+        registrationSequence?: string
+        accountType?: string
+        RecordTypeName?: string
+        firstName?: string
+        lastName?: string
+        gender?: string
+        email?: string
+        birthDate?: string
+        phoneNumber?: string
+        role?: string
+        caregiverType?: string
+        caregiverLevel?: string
+        relatedCRMGlobalCustomerID?: string
+
