@@ -1,0 +1,75 @@
+#%RAML 1.0
+title: gsusa-registration-api-p
+version: v1.0
+description: This Process API will call the system API for create/Update Person/Business Account in Salesforce along with Hybris System.
+
+traits:
+  client-id-required:
+    headers:
+      client_id:
+        type: string
+      client_secret:
+        type: string
+    responses:
+      401:
+        description: Unauthorized or invalid client application credentials
+      500:
+        description: Bad response from authorization server, or WSDL SOAP Fault error
+
+types:
+  errorResponse:  !include dataTypes/ErrorResponse-data-type.raml
+  statusResponse: !include dataTypes/StatusResponse-data-type.raml
+  InputRequest:   !include dataTypes/InputRequest-data-type.raml
+  OutputResponse: !include dataTypes/OutputResponse-data-type.raml
+
+uses:
+  customTypes: libraries/customTypesLibrary.raml
+           
+/v1/accounts:
+     displayName: Operations Related to Account in Salesforce and Hybris
+     description: "Operations Related to Account in Salesforce and Hybris"
+     
+     /createupdate:
+      displayName: Accounts Creation and Updation in Salesforce and Hybris
+      description: |
+                 Working with accounts:
+                  * Creating accounts
+      post:
+          is: [client-id-required]
+          description: |
+             Create a New Account and Update Account in Salesforce and Hybris System
+          body:
+             application/json:
+               type: InputRequest
+               example: !include examples/InputAccounts-request-example.json
+          responses:
+              200:
+                description: Account Creation and Updation
+                body: 
+                  application/json:
+                   type: OutputResponse
+                   example: !include examples/OutputAccounts-response-example.json
+
+              201:
+                description: Account Creation and Updation
+                body: 
+                  application/json:
+                   type: OutputResponse
+                   example: !include examples/OutputAccounts-response-example.json
+              400:
+                 body:
+                   application/json:
+                     type: OutputResponse
+                     example: !include examples/OutputAccounts-response-example.json
+
+              401:
+                 body:
+                   application/json:
+                     type: OutputResponse
+                     example: !include examples/OutputAccounts-response-example.json
+
+              404:
+                 body:
+                   application/json:
+                     type: OutputResponse
+                     example: !include examples/OutputAccounts-response-example.json              

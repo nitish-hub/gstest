@@ -1,0 +1,18 @@
+{
+   "registerInfo": [
+      {
+         "contactInfo": [
+            {
+			   "errorMessage": "",
+               "registrationSequence": "1",
+               "returnStatus": "Success"
+            },
+            {
+               "errorMessage": "ERROR: The field [gsCustomerUid] cannot be empty",
+               "registrationSequence": "2",
+               "returnStatus": "Error"
+            }
+         ]
+      }
+   ]
+}

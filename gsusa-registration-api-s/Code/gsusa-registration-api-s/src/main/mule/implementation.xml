@@ -1,0 +1,583 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+		<flow name="sfdcAccountCreateUpdateFlow" doc:id="d5a6cc8a-588d-4c03-a01d-888d01862c3c">
+				<ee:transform doc:name="CreateUpdate DataPayload Logic" doc:id="72c19d6d-47dc-4d91-bdde-c2c3c9922628">
+			<ee:message>
+				<ee:set-payload resource="dwl/sfdc-create-update-payloadlogic.dwl" />
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="recordAccountType"><![CDATA[vars["input"].Register[0].accountType]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Final Payload Logic" doc:id="1d56af8d-d2af-4680-b526-961dac801864">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="DataPayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload.Data]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Payload Log" doc:id="de43925c-5d7b-4dae-a0f4-bb5c2b9f4461" message="#[vars.DataPayload]" />
+		<flow-ref doc:name="getSFDCauthaccesstokenFlow" doc:id="147be4ea-1b33-4088-9c82-2bb100c8bb39" name="getSFDCauthaccesstokenFlow" />
+		<choice doc:name="Did Access Token is Generated?" doc:id="4e16d1b2-755e-4931-9f5f-f24bbf66d0bb">
+			<when expression="#[vars.sfdcAccessToken !=null]">
+				<choice doc:name="Is it Person/Business Account?" doc:id="b7339688-5bb6-4a04-98a3-6b787300c422" >
+					<when expression="#[vars.recordAccountType == ${account.businessRecordType}]" doc:id="58937686-5854-48dd-b343-181b9fd7c915">
+						<flow-ref doc:name="callbusinessAccountFlow" doc:id="5d7fc3e3-ffb1-4a9b-8142-196378a51dfd" name="callbusinessAccountFlow"/>
+					</when>
+					<when expression="#[vars.recordAccountType == ${account.personRecordType}]" >
+						<flow-ref doc:name="callpersonAccountFlow" doc:id="951c50df-91bb-454b-b4a6-836331622d95" name="callpersonAccountFlow"/>
+					</when>
+					<otherwise >
+						<ee:transform doc:name="Transform Message" doc:id="866b87a4-0a6b-46cb-bfe3-32415deb6bb5" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": "Data Error",  
+    "errorType": "Bad Request",
+    "errorCause": "Data Issue",
+    "errorMessage": "Input Data is not related to Person or Business Account in SalesForce"
+}
+]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value="200" doc:name="Set http status" doc:id="f5a7c7e0-d6cb-4048-8f09-7366b68cc4ba" variableName="httpStatus" />
+						<set-payload value="#[payload]" doc:name="Set Output Payload" doc:id="4c235e4e-fb52-48d1-ba3a-7ee6a8028175" />
+					</otherwise>
+				</choice>
+
+
+</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="fbc4b060-a613-4972-907a-c4765d9c2b82">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[payload.statusCode]" doc:name="Set http status" doc:id="412a17b8-7509-44ce-868d-b0f7c624e42e" variableName="httpStatus" />
+				<set-payload value='#[payload]' doc:name="Access Token Is not Generated" doc:id="593c3f20-055d-4e38-99d1-4720d446b2bd" />
+			
+</otherwise>
+		</choice>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ec1640db-03db-45b3-bbe7-8caaf4f8d2d1" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="7f3da0c2-a376-4f03-b304-c26e7aa38bb0">
+					<ee:message>
+						<ee:set-payload><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode":"${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}
+ ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="74f5d155-6323-4434-9638-2b7d30ba8103" type="EXPRESSION">
+				<ee:transform doc:name="Transform Message" doc:id="1d72994b-eb2b-45ae-9416-30b9848a9ea9" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode":"${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}
+ ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+</flow>
+	<flow name="callpersonAccountFlow" doc:id="0fb172da-6f9c-4d70-8902-e9e57e927956">
+					<try doc:name="Try" doc:id="9a91fd1e-36b2-4bf9-a443-a5683fb9569a" >
+					<http:request method="POST" doc:name="SFDC Person Rest API Request Call" doc:id="6ab1638e-80a2-4681-ae28-fe81ecef2ec4" url='#[vars.hostInstanceUrl ++ "${auth.sfdc.PersonAccountPath}"]'>
+					<http:body><![CDATA[#[%dw 2.0
+output application/json
+---
+ vars.DataPayload]]]></http:body>
+					<http:headers><![CDATA[#[output application/java
+---
+{
+	Authorization : vars.sfdcAccessToken
+}]]]></http:headers>
+				
+</http:request>
+					<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8a26ee42-1c3e-42fa-b603-e40d95f9b34f" type="ANY">
+					<ee:transform doc:name="Transform Message" doc:id="a99ce292-33c7-4fbd-a7bc-2089f70766ef">
+								<ee:message>
+								</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="sfdcPAPIErrorResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-variable>
+						</ee:variables>
+							</ee:transform>
+				</on-error-continue>
+					</error-handler>
+				</try>
+				<choice doc:name="Is GS Person Account Created?" doc:id="a6e4e547-6ddb-43bc-a9cd-81c619cf01b8" >
+					<when expression="#[attributes.statusCode == 200]">
+						<ee:transform doc:name="Transform Message" doc:id="824b6c7c-9352-4d08-840d-993f504bd5a6" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfacecode": "${interface.code.val}",
+    "creationdate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+   	"Response":  (vars["DataPayload"].personAccounts default [])  map (object,index) -> using (id = object.SequenceId) {
+	sequenceId  :id,
+    firstName   :object.FirstName,
+	lastName    :object.LastName,
+	contactType :vars["input"].Register[0].contactType,
+	"sfdcStatus":(payload default [] filter ($.*SequenceId contains id)  map (responseObject) -> {
+		"crmGlobalId":responseObject.GlobalId,
+		"status":responseObject.ReturnStatus,
+		"message":responseObject.ErrorMessage,
+		"errorDetails":{
+              ("errordescription":vars["sfdcPAPIErrorResponse"].errorDescription)  if (vars["sfdcPAPIErrorResponse"].errorDescription != null), 
+              ("errortype":vars["sfdcPAPIErrorResponse"].errorType)  if (vars["sfdcPAPIErrorResponse"].errorType != null), 
+              ("errorcause":vars["sfdcPAPIErrorResponse"].errorCause)  if (vars["sfdcPAPIErrorResponse"].errorCause != null), 
+              ("errormessage":vars["sfdcPAPIErrorResponse"].errorMessage)  if (vars["sfdcPAPIErrorResponse"].errorMessage != null) 
+            }	
+   })
+} 
+}
+
+/*error.detailedDescription*/]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<otherwise>
+						<ee:transform doc:name="Transform Message" doc:id="947e6dca-2ac9-4206-aa35-aa84f8b0f90c" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:payload
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					
+</otherwise>
+				
+</choice>
+	
+	</flow>
+	<flow name="callbusinessAccountFlow" doc:id="c399036e-82f8-40ff-a4d9-90825d5e44d7">
+	 				<try doc:name="Try" doc:id="42180480-7b13-4800-bf3e-adcd179f1926" >
+					<http:request method="POST" doc:name="SFDC Business Rest API Request Call" doc:id="40ec49d9-cf88-42fa-b7bb-dc61cd1f789d" url='#[vars.hostInstanceUrl ++ "${auth.sfdc.BusinessAccountPath}"]'>
+					<http:body><![CDATA[#[%dw 2.0
+output application/json
+---
+ vars["DataPayload"].businessAccounts]]]></http:body>
+					<http:headers><![CDATA[#[output application/java
+---
+{
+	Authorization : vars.sfdcAccessToken
+}]]]></http:headers>
+				
+</http:request>
+					<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="ebd0f606-278b-409a-b8d3-a348425c5b42" type="ANY">
+					<ee:transform doc:name="Transform Message" doc:id="d2a404ba-ceaf-4e8f-b251-07f317ebf26f">
+								<ee:message>
+								</ee:message>
+						<ee:variables >
+							<ee:set-variable variableName="sfdcBAPIErrorResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-variable>
+						</ee:variables>
+							</ee:transform>
+				</on-error-continue>
+					</error-handler>
+				</try>
+				<choice doc:name="Is GS Business Account Created?" doc:id="d802cc68-487f-45fe-8073-a7bb5e78563c" >
+					<when expression="#[attributes.statusCode == 200]">
+						<ee:transform doc:name="Transform Message" doc:id="236352b9-375c-499d-a3ba-324ffad6bab5" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfacecode": "${interface.code.val}",
+    "creationdate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+   	"Response":  (vars["DataPayload"].businessAccounts default [])  map (object,index) -> using (id = object.SequenceId) {
+	sequenceId  :id,
+    Name        :object.fields.Name,
+	contactType :vars["input"].Register[0].contactType,
+	"sfdcStatus":(payload default [] filter ($.*SequenceId contains id)  map (responseObject) -> {
+		"crmGlobalId":responseObject.GlobalId,
+		"status":responseObject.ReturnStatus,
+		"message":responseObject.ErrorMessage,
+		"errorDetails":{
+              ("errordescription":vars["sfdcBAPIErrorResponse"].errorDescription)  if (vars["sfdcBAPIErrorResponse"].errorDescription != null), 
+              ("errortype":vars["sfdcBAPIErrorResponse"].errorType)  if (vars["sfdcBAPIErrorResponse"].errorType != null), 
+              ("errorcause":vars["sfdcBAPIErrorResponse"].errorCause)  if (vars["sfdcBAPIErrorResponse"].errorCause != null), 
+              ("errormessage":vars["sfdcBAPIErrorResponse"].errorMessage)  if (vars["sfdcBAPIErrorResponse"].errorMessage != null) 
+            }	
+   })
+} 
+}
+
+/*error.detailedDescription*/]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<otherwise>
+						<ee:transform doc:name="Transform Message" doc:id="167760c4-3c83-4521-9381-626a21f131b0" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message:payload
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					
+</otherwise>
+				
+</choice>
+	
+	</flow>
+	
+	<flow name="sapAccountCreateUpdateFlow" doc:id="871a160f-9849-4fa2-8615-d82b89361ed4">
+		<ee:transform doc:name="CreateUpdate DataPayload Logic" doc:id="1d125e3f-f691-4164-b98f-5ddd7f4f5710">
+			<ee:message>
+				<ee:set-payload resource="dwl/sap-create-update-payloadlogic.dwl" />
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Final Payload Logic" doc:id="c3f8b485-af79-4209-8e7f-33aa7f0cf1cc">
+			<ee:message />
+			<ee:variables>
+				<ee:set-variable variableName="DataPayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload.Data]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Payload Log" doc:id="cd14dbf8-aab9-4eb6-96b4-6623d62efa88" message="#[vars.DataPayload]" />
+		<flow-ref doc:name="getSAPauthaccesstokenFlow" doc:id="7fd34be5-c072-4154-932e-fcd606cd5e0b" name="getSAPauthaccesstokenFlow" />
+		<choice doc:name="Did Access Token is Generated?" doc:id="9a8dc653-5c35-4395-b672-833fdc1c0c98">
+			<when expression="#[vars.sapAccessToken !=null]">
+							<try doc:name="Try" doc:id="675347ae-b585-4950-829d-dee7a627bec1" >
+					<http:request method="POST" doc:name="SAP Rest API Request Call" doc:id="30064cfd-b6fa-40f3-b095-d99d7e0ba15f" config-ref="SAP-httpRequestConfig" path="${auth.sap.ResourcePath}">
+					<http:body><![CDATA[#[%dw 2.0
+output application/json
+---
+ vars.DataPayload]]]></http:body>
+					<http:headers><![CDATA[#[output application/java
+---
+{
+	Authorization : vars.sapAccessToken
+}]]]></http:headers>
+				
+</http:request>
+					<error-handler>
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="9760adb3-57fb-4e46-a816-7b7edecc8a52" type="ANY">
+							<ee:transform doc:name="Transform Message" doc:id="f44cf79b-0c59-46b1-b064-c91711683f79">
+								<ee:message>
+								</ee:message>
+								<ee:variables >
+									<ee:set-variable variableName="sapAPIErrorResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<choice doc:name="Is GS Account Created/Updated" doc:id="7672b37c-02dc-4fce-a964-3504043d3c48" >
+					<when expression="#[attributes.statusCode == 200]">
+						<ee:transform doc:name="Transform Message" doc:id="0641fa7d-be3c-4057-94cb-fd49f1dc3447" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfacecode": "${interface.code.val}",
+    "creationdate" : (now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+   	"Response":  (vars["DataPayload"].registerInfo default [])  map (object,index) -> using (id = object.contactInfo[0].registrationSequence) {
+	"sequenceId"  :id,
+	"crmGlobalId":object.contactInfo[0].crmGlobalCustomerID,
+    "firstName"   :object.contactInfo[0].firstName,
+	"lastName"    :object.contactInfo[0].lastName,
+	contactType :vars["input"].Register[0].contactType,
+	"sapStatus":(payload.registerInfo[0].contactInfo default [] filter ($.*registrationSequence contains id)  map (responseObject) -> {
+		"status":responseObject.returnStatus,
+		"message":responseObject.errorMessage,
+		"errorDetails":{
+               ("errordescription":vars["sapAPIErrorResponse"].errorDescription)  if (vars["sapAPIErrorResponse"].errorDescription != null), 
+               ("errortype":vars["sapAPIErrorResponse"].errorType)  if (vars["sapAPIErrorResponse"].errorType != null), 
+               ("errorcause":vars["sapAPIErrorResponse"].errorCause)  if (vars["sapAPIErrorResponse"].errorCause != null), 
+               ("errormessage":vars["sapAPIErrorResponse"].errorMessage)  if (vars["sapAPIErrorResponse"].errorMessage != null) 
+            }	
+   })
+} 
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<otherwise>
+						<ee:transform doc:name="Transform Message" doc:id="10d97ebd-e897-4601-bbb6-c1070810dd51" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					
+</otherwise>
+				
+</choice>	
+			
+</when>
+			<otherwise>
+				<ee:transform doc:name="Transform Message" doc:id="168b94e7-02c1-4d79-9028-34e8abaca213">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[payload.statusCode]" doc:name="Set http status" doc:id="58bb679b-a14c-4018-a35f-41f10a15969c" variableName="httpStatus" />
+				<set-payload value='#[payload]' doc:name="Access Token Is not Generated" doc:id="ed7894f2-ab6d-4074-9f31-5fc254090011" />
+			
+</otherwise>
+		</choice>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7b8879cb-06b6-4347-bcbb-60efb66ae7a6" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="2b178937-d366-43bc-9f76-c393f3dd85ef">
+					<ee:message>
+						<ee:set-payload><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}
+ ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a560f56e-c4a7-42bc-a209-4d83912f4915" type="EXPRESSION">
+				<ee:transform doc:name="Transform Message" doc:id="bd9d42e6-2d32-4ed9-99cb-0f40111caf10" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}
+ ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="getSAPauthaccesstokenFlow" doc:id="81f4b6ec-90f0-4ff3-af9a-527fb9c78cbf" >
+		<try doc:name="Try" doc:id="1052d861-b8dd-458e-bd1d-3bc764f6576d" >
+			<http:request method="POST" doc:name="SAP Token Authorization Call" doc:id="81653a27-c88a-407f-b76a-2d98cebeb372" config-ref="SAP-httpRequestConfig" path="${auth.sap.authTokenrequestPath}" target="SapToken">
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+    client_id : ${auth.sap.client_id},
+	client_secret : ${auth.sap.client_secret},
+	grant_type : ${auth.sap.grant_type}
+}]]]></http:query-params>
+		</http:request>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="53f5833d-4927-408c-9fbc-3c7096cebd0e" type="ANY">
+					<ee:transform doc:name="Transform Message" doc:id="4657d342-c9e5-4e84-a4df-4a06ec7e1983" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}
+]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Get Token" doc:id="15de465c-8680-4ced-9f0c-35282f4c51ff" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="sapAccessToken" ><![CDATA[if (vars["SapToken"].access_token != null) ("Bearer " ++ vars["SapToken"].access_token) else null ]]></ee:set-variable>
+			
+</ee:variables>
+		
+</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="9d04759a-7aec-4a5d-b4fe-d96e9b3e94ee" message='#["Successfully Passed through SAP Token Generation Process"]'/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="30f3f814-eee6-46c2-86b7-fabe9374f620" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="31315149-4674-490c-ab17-a82f0882a0f2" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}
+]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+	
+</flow>
+<flow name="getSFDCauthaccesstokenFlow" doc:id="07709e50-d7bb-4b47-932b-7e23e86d2f27" >
+		<try doc:name="Try" doc:id="11dcc040-0dd3-4cad-89e6-5a4991149289" >
+			<http:request method="POST" doc:name="SFDC Token Authorization Call" doc:id="21355a53-b5c1-4f7b-aa75-1363f31805f1" config-ref="SFDC-httpRequestConfig" path="${auth.sfdc.authTokenrequestPath}" target="SfdcToken">
+			<http:query-params><![CDATA[#[output application/java
+---
+{
+    grant_type :  ${auth.sfdc.grant_type},
+	client_id :   ${auth.sfdc.client_id},
+	client_secret : ${auth.sfdc.client_secret},
+	username :${sfdc.username},
+	password :${sfdc.password}
+	
+}]]]></http:query-params>
+		</http:request>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="70cc6133-fede-4115-849d-c60c861c1164" type="ANY">
+					<ee:transform doc:name="Transform Message" doc:id="0e04b6e3-68dd-43dd-9b4f-dd34d9e06c0c" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Get HostURL and Token" doc:id="a38f4f38-e0b6-48bb-8155-6f40c5a4b233" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="hostInstanceUrl" ><![CDATA[if (vars["SfdcToken"].instance_url != null) (vars["SfdcToken"].instance_url) else null ]]></ee:set-variable>
+				<ee:set-variable variableName="sfdcAccessToken" ><![CDATA[if (vars["SfdcToken"].access_token != null) ("Bearer " ++ vars["SfdcToken"].access_token) else null ]]></ee:set-variable>
+			
+</ee:variables>
+		
+</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="0af485c4-3dc7-402e-8736-82669c87946c" message='#["Successfully Passed through SFDC Token Generation Process"]'/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a1e5a796-c396-4431-8ecd-5ebd5765a455" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="cbb5e131-670e-47fc-ba17-d5302f5173cd" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-continue>
+		</error-handler>
+
+	
+</flow>
+</mule>
