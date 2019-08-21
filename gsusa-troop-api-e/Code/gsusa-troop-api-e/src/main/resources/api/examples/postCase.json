@@ -1,0 +1,17 @@
+[
+	{
+		"SequenceId": "1",
+		"Type": "Case",
+		"Fields": { 
+			"Account.GSUSA_Global_Id__c": "000000014",
+			"SuppliedEmail": "testemail@gsusa.org", 
+			"Status": "New", 
+			"Origin": "Phone", 
+			"Reason": "Complex functionality", 
+			"Priority": "Medium", 
+			"Subject": "I need help with an order", 
+			"Description": "I need help placing an order for new uniforms in different sizes", 
+			"RecordTypeId": "Contact_Us" 
+		}
+	}
+]

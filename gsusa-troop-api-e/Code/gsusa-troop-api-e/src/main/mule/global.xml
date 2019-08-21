@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+	    <http:listener-config name="GlobalHttpListenerConfig">
+        <http:listener-connection host="0.0.0.0"  port="${https.port}" protocol="HTTPS">
+			<tls:context >
+				<tls:key-store path="${keystore.path}" alias="${keystore.alias}" keyPassword="${keystore.password}" password="${keystore.password}" />
+			</tls:context>
+		</http:listener-connection>
+    </http:listener-config>
+    <apikit:config name="gsusa-troop-api-e-config" raml="gsusa-troop-api-e.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <http:request-config name="HTTP_CASE_Request_configuration" doc:name="HTTP Request configuration" doc:id="bb9c9090-4ae0-4493-9197-acfb8653f93b" >
+		<http:request-connection protocol="HTTPS" host="${sfdc.case.create.host}" />
+	</http:request-config>
+	<global-property doc:name="Global Property" doc:id="547f15f3-064c-4a3c-a38a-98c5eb3c1192" name="mule.env" value="DEV" />
+	<configuration-properties doc:name="Configuration properties" doc:id="d44f8080-1c25-48ab-b6fb-a7af7d075583" file="config-${mule.env}.properties" />
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="bf724bfc-8036-4ffb-b4dd-dffdd3537c6f" flowRef="gsusa-troop-api-e-main" />
+	
+	
+</mule>
