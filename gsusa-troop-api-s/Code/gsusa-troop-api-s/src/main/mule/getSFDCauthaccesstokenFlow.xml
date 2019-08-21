@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+
+	<flow name="getSFDCauthaccesstokenFlow" doc:id="bd0e162c-1797-4360-8566-c55770cac3b2" >
+		<try doc:name="Try" doc:id="9349b4f6-7819-40d4-9a7b-4ef34511ab40" >
+			<http:request method="POST" doc:name="getTokenCall" doc:id="da221bd5-a7a9-459f-99ca-a2b6df6547b5" config-ref="SFDC_Token_Request_Config" path="${auth.sfdc.authTokenrequestPath}" target="AccessToken">
+		<http:query-params><![CDATA[#[output application/java
+---
+{
+	grant_type : ${auth.sfdc.grant_type},
+	client_id : ${auth.sfdc.client_id},
+	client_secret : ${auth.sfdc.client_secret},
+	username : ${auth.sfdc.case.username},
+	password : ${auth.sfdc.password}
+	
+}]]]></http:query-params>
+</http:request>
+			<ee:transform doc:name="GET HOST URL AND TOKEN" doc:id="50a7c352-e696-49ea-bc49-9ca4b81de570">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="SFDCOrderAPIUrl"><![CDATA[if (vars["AccessToken"].instance_url != null) (vars["AccessToken"].instance_url) else null ]]></ee:set-variable>
+				<ee:set-variable variableName="SFDCAccessToken"><![CDATA[if (vars["AccessToken"].access_token != null) ("Bearer " ++ vars["AccessToken"].access_token) else null ]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<logger level="INFO" doc:name="Success Text" doc:id="55acba91-2bb1-45ce-bf73-9cf580e8ff63" message='"Successfully Passed through SFDC Token Generation Process"' />
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="41adc26d-a10b-4876-be7d-62c2e219e2a2" type="ANY">
+					<ee:transform doc:name="Error Message" doc:id="d1df8055-26d6-4ed8-9b7f-97434eb4aa4d">
+						<ee:message>
+							<ee:set-payload><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode":"UIToSFDCCreateCase",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode,
+    "payload": vars.DataPayload
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<logger level="INFO" doc:name="Logger" doc:id="2983337b-8d03-4656-a79c-1df7fcd6c65f" message="#[payload]"/>
+					<anypoint-mq:nack doc:name="Nack" doc:id="a6bb3336-f6ab-4b63-929d-2c8900798fb6" config-ref="Anypoint_MQ_Default_subscriber" messageContext="#[vars.mqMessage.attributes]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<choice doc:name="Token Generated?" doc:id="a1e0c518-55ab-4ad0-9d31-a87d162b4e43" >
+			<when expression="#[vars.SFDCAccessToken != null]">
+				<logger level="INFO" doc:name="Logger" doc:id="3cd7de39-a5cb-4b5f-a09e-2098e521c0a5" message="Token generated successfully"/>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="f7cf0fd8-a3c2-4aad-a78e-55015d2285c9" message="Token generation failed"/>
+				<anypoint-mq:nack doc:name="Nack" doc:id="da9980ba-df0c-4ad5-b477-721063f04b70" config-ref="Anypoint_MQ_Default_subscriber" messageContext="#[vars.mqMessage.attributes]" />
+				<raise-error doc:name="Raise error" doc:id="aad5021a-4224-4af5-8153-78ed832dc397" type="TOKEN:GENERATION_FAILED" description="Token Generation failed for accessing Order API"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="64b1e9ff-ab7e-4944-a94d-89a8820a0ab5" >
+				<ee:transform doc:name="Error Message" doc:id="264cf7e1-4bfd-4d44-bcc1-5575a973816f">
+						<ee:message>
+							<ee:set-payload><![CDATA[ %dw 2.0
+output application/json
+---
+{
+    "interfaceCode":"UIToSFDCCreateCase",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode,
+    "payload" : vars.DataPayload
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				<logger level="INFO" doc:name="Logger" doc:id="9652e0ea-67ab-4e1a-a6bc-a8d49504d036" message="#[payload]"/>
+				<anypoint-mq:nack doc:name="Nack" doc:id="8c23d511-1810-4db1-b993-06f37ccf9c32" config-ref="Anypoint_MQ_Default_subscriber" messageContext="#[vars.mqMessage.attributes]" />
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
