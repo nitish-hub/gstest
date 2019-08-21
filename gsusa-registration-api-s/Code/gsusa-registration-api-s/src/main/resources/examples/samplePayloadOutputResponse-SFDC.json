@@ -1,0 +1,63 @@
+[
+        {
+            "SequenceId": "0",
+            "ReturnStatus": "Success",
+            "HubSequenceId": "HUB-1",
+            "GlobalId": "000000122",
+            "ErrorMessage": null
+        },
+        {
+            "SequenceId": "1",
+            "ReturnStatus": "Success",
+            "HubSequenceId": "HUB-1",
+            "GlobalId": "000000123",
+            "ErrorMessage": null
+        },
+        {
+            "SequenceId": "2",
+            "ReturnStatus": "Success",
+            "HubSequenceId": "HUB-1",
+            "GlobalId": "000000124",
+            "ErrorMessage": null
+        },
+        {
+            "SequenceId": "3",
+            "ReturnStatus": "Success",
+            "HubSequenceId": "HUB-1",
+            "GlobalId": "000000125",
+            "ErrorMessage": null
+        },
+        {
+            "SequenceId": "HUB-1",
+            "ReturnStatus": "Success",
+            "GlobalId": "000000126",
+            "ErrorMessage": null,
+            "Affiliations": [
+                {
+                    "ReturnStatus": "Success",
+                    "ErrorMessage": null,
+                    "AccountSequenceId": 3,
+                    "AccountGlobalId": "000000125"
+                },
+                {
+                    "Type": "Girl",
+                    "ReturnStatus": "Success",
+                    "ErrorMessage": null,
+                    "AccountSequenceId": 0,
+                    "AccountGlobalId": "000000122"
+                },
+                {
+                    "ReturnStatus": "Success",
+                    "ErrorMessage": null,
+                    "AccountSequenceId": 1,
+                    "AccountGlobalId": "000000123"
+                },
+                {
+                    "ReturnStatus": "Success",
+                    "ErrorMessage": null,
+                    "AccountSequenceId": 2,
+                    "AccountGlobalId": "000000124"
+                }
+            ]
+        }
+]
