@@ -33,7 +33,10 @@
 						<applicationName>gsusa-order-api-p</applicationName>
 						<environment>GSMULEPU-TEST</environment>
 						<properties>
-							<env>DEV</env>
+							<env>DUMMY</env>
+							<client_id>DUMMY</client_id>
+							<client_secret>DUMMY</client_secret>
+							<autodiscovery.id>DUMMY</autodiscovery.id>
 						</properties>
 					</cloudHubDeployment>
 				</configuration>
