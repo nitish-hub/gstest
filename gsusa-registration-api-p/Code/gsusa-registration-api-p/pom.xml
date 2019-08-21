@@ -25,7 +25,7 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
-				  <cloudHubDeployment>
+								  <cloudHubDeployment>
                        <uri>https://anypoint.mulesoft.com</uri>
                        <muleVersion>${app.runtime}</muleVersion>
                        <username>${username}</username>
@@ -39,7 +39,8 @@
                            <autodiscovery.id> ${autodiscovery_id }</autodiscovery.id>
                        </properties>
                   </cloudHubDeployment>
-				</configuration>
+				<classifier>mule-application</classifier>
+                </configuration>
 			</plugin>
 		</plugins>
 	</build>
