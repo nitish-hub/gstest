@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="callProcessAPIFlow" doc:id="871a160f-9849-4fa2-8615-d82b89361ed4">	
+				<ee:transform doc:name="Input Payload from Web UI" doc:id="2a961b51-9ef4-4181-9619-93e2214984c9" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="DataPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload
+]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<try doc:name="Try" doc:id="ecec610a-3c8e-4c1f-bc1c-4a94b22c913b" >
+			<http:request method="POST" doc:name="Account Process API Request" doc:id="af027cde-08d2-4e32-9b61-503156e1ab37" path="${api.process.ResourcePath}" config-ref="RegistrationHost_HTTP_Request_configuration">
+				<http:body ><![CDATA[#[%dw 2.0
+output application/json
+---
+vars.DataPayload]]]></http:body>
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_id" : attributes.queryParams.'client_id',
+	"client_secret" : attributes.queryParams.'client_secret'
+}]]]></http:headers>
+			</http:request>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="fe45e942-dc35-43b7-8884-3472334b60ae" type="ANY" >
+					<ee:transform doc:name="Transform Message" doc:id="5c0f2dc5-f906-4dee-92af-9c713c5bef2e" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{   
+   "Namespace" :error.errorType.namespace,
+   "Identifier":error.errorType.identifier, 	
+   "MuleMessage": error.cause.message,
+   "Description": error.cause.errorMessage.payload,
+   "code" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<choice doc:name="Is GS Account Created/Updated" doc:id="df9d5817-5e57-41e8-91ad-fec4e60ec041" >
+			<when expression="#[attributes.statusCode == 200]" >
+				<ee:transform doc:name="Output Response to Web UI" doc:id="d51c13fa-906a-4ec2-90f9-f1a46a7a78b1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="6b40d331-abfd-4e08-8367-904660944989" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	status:payload.code,
+	message:payload
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[payload.code]" doc:name="Set Variable" doc:id="9e3b67dd-d14b-4c95-a95f-d3f9a1590155" variableName="httpStatus" />
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="3bd7fda5-974a-40d0-ae70-4a5a9aad7000" />
+			</otherwise>
+		</choice>
+		<error-handler>
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="7b8879cb-06b6-4347-bcbb-60efb66ae7a6" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="2b178937-d366-43bc-9f76-c393f3dd85ef">
+					<ee:message>
+						<ee:set-payload><![CDATA[ %dw 2.0
+output application/json
+---
+{
+	Namespace:error.errorType.namespace,
+    Identifier:error.errorType.identifier, 
+   "Mule Message": error.cause.message,
+   "Description": error.cause.errorMessage.payload,
+  ('Custom Message'    : 'Please check if the calling URL is functioning. If it is not responding please contact your system administrator') if error.errorType.identifier == "TIMEOUT"
+}  
+ ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>
