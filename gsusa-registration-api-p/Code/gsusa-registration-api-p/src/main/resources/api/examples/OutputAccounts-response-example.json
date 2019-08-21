@@ -1,0 +1,34 @@
+{
+   "Response":[
+      {
+         "gsCRMGlobalID":"GLOBAL2000",
+         "firstName":"Jas",
+         "lastName":"Bourne",
+         "contactType":"GIRL",
+         "sapStatus":{
+            "status":"Success",
+            "message":"Account Created/Updated Successfully",
+            "errorDetails":{
+               "interfacecode":"Account",
+               "creationdate":"sysdate",
+               "errordescription":"Bad Request",
+               "errortype":"HTTP:BADREQUEST",
+               "errorcause":"a ResponseValidatorTypedException instance",
+               "errormessage":"Bad Request"
+            }
+         },
+         "sfdcStatus":{
+            "status":"Success",
+            "message":"Account Created/Updated Successfully",
+            "errorDetails":{
+               "interfacecode":"Account",
+               "creationdate":"sysdate",
+               "errordescription":"Bad Request",
+               "errortype":"HTTP:BADREQUEST",
+               "errorcause":"a ResponseValidatorTypedException instance",
+               "errormessage":"Bad Request"
+            }
+         }
+      }
+   ]
+}

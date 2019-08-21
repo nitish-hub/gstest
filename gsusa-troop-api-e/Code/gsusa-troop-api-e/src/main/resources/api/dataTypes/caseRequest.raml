@@ -1,0 +1,45 @@
+#%RAML 1.0 DataType
+
+#This file is located at dataTypes/caseRequest.raml
+
+type: array
+items:
+ properties:
+     Type: string
+     SequenceId: string
+     Fields:
+      type: object
+      required: true
+      properties:
+        Account.GSUSA_Global_Id__c?: string | nil
+        SuppliedEmail?: string | nil
+        Reason_Starting_Troop__c?: string | nil
+        Reason_Starting_Troop_Other__c?: string | nil
+        Grades_Joining_Troop__c?: string | nil
+        Meeting_Frequency__c?: string | nil
+        Meeting_Days__c?: string | nil
+        Date_of_First_Meeting__c?: string | nil
+        Membership_Season_Start__c?: string | nil
+        Minimum_Number_of_Girls__c?: integer | nil
+        Maximum_Number_of_Girls__c?: integer | nil
+        Girls_Already_Identified__c?: boolean | nil
+        Troop_Girls_Details__c?: string | nil
+        Volunteers_Already_Identified__c?: boolean | nil
+        Volunteers_Details__c?: string | nil
+        Primary_Activities_Emphasis__c?: string | nil
+        Meeting_Location__c?: string | nil
+        Troop_Affiliation__c?: string | nil
+        Status: string
+        Origin: string
+        Priority?: string | nil
+        Subject?: string | nil
+        Description?: string | nil
+        RecordTypeId: string      
+
+
+
+
+
+
+
+

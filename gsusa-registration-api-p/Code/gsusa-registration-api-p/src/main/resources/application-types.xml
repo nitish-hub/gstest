@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="inputPayload" format="json">
+      <types:shape format="weave" example="examples/samplePayloadInputRequest.json"><![CDATA[%dw 2.0
+
+type inputPayload = {|
+  Register: Array<{|    crmGlobalCustomerID: String,     parentcrmGlobalCustomerID: String,     addcaregiver: String,     accountType: String,     recordTypeName: String,     registrationSequence: String,     contactType: String,     firstName: String,     lastName: String,     gender: String,     grade: String,     email: String,     birthDate: String,     mobilePhone: String,     phoneNumber: String,     nickname: String,     maidenName: String,     mailingAddress: {|      mailingStreet: String,       mailingCity: String,       mailingState: String,       mailingPostalCode: String,       mailingCountry: String    |},     billingAddress: {|      billingStreet: String,       billingCity: String,       billingState: String,       billingPostalCode: String,       billingCountry: String    |},     race: String,     ethnicity: String,     maritalStatus: String,     university: String,     role: String,     businessAccountName: String,     preferredBillingCounty: String,     programGradeLevel: String,     website: String,     gsCustomerUid: String,     assignedTroopStatus: String,     assignedTroop: String,     assignedCouncil: String,     assignedCouncilStatus: String,     customer: String,     productCode: String,     paymentType: String,     alumni: String,     paymentMode: String,     bundleCode: String  |}>, 
+  Caregivers: Array<{|    crmGlobalCustomerID: String,     parentcrmGlobalCustomerID: String,     contactType: String,     customer: String,     registrationSequence: String,     accountType: String,     RecordTypeName: String,     firstName: String,     lastName: String,     gender: String,     email: String,     birthDate: String,     phoneNumber: String,     role: String,     caregiverType: String,     caregiverLevel: String,     relatedCRMGlobalCustomerID: String  |}>
+|} {"example": "{\"Register\":[{\"crmGlobalCustomerID\":\"\",\"parentcrmGlobalCustomerID\":\"000000087\",\"addcaregiver\":\"Y\",\"accountType\":\"Person\",\"recordTypeName\":\"Girl\",\"registrationSequence\":\"0\",\"contactType\":\"GIRL\",\"firstName\":\"Tisha\",\"lastName\":\"Jones\",\"gender\":\"GIRL\",\"grade\":\"3\",\"email\":\"000000087gt@mailinator.com\",\"birthDate\":\"2007-06-11\",\"mobilePhone\":\"4076191234\",\"phoneNumber\":\"4076191239\",\"nickname\":\"\",\"maidenName\":\"\",\"mailingAddress\":{\"mailingStreet\":\"Pleasure 4598\",\"mailingCity\":\"Shreveport\",\"mailingState\":\"Louisiana\",\"mailingPostalCode\":\"71105\",\"mailingCountry\":\"United States\"},\"billingAddress\":{\"billingStreet\":\"Pleasure 4598\",\"billingCity\":\"Shreveport\",\"billingState\":\"Louisiana\",\"billingPostalCode\":\"71105\",\"billingCountry\":\"United States\"},\"race\":\"Other Races\",\"ethnicity\":\"Non-Hispanic\",\"maritalStatus\":\"Single\",\"university\":\"Boston\",\"role\":\"Girl\",\"businessAccountName\":\"\",\"preferredBillingCounty\":\"\",\"programGradeLevel\":\"\",\"website\":\"\",\"gsCustomerUid\":\"000000087@mailinator.com\",\"assignedTroopStatus\":\"REQUEST\",\"assignedTroop\":\"Troop123\",\"assignedCouncil\":\"Council1000\",\"assignedCouncilStatus\":\"REQUEST\",\"customer\":\"false\",\"productCode\":\"M01\",\"paymentType\":\"\",\"alumni\":\"false\",\"paymentMode\":\"CreditCard\",\"bundleCode\":\"\"}],\"Caregivers\":[{\"crmGlobalCustomerID\":\"\",\"parentcrmGlobalCustomerID\":\"\",\"contactType\":\"INITIALSIGNUPCAREGIVER\",\"customer\":\"true\",\"registrationSequence\":\"1\",\"accountType\":\"Person\",\"RecordTypeName\":\"Parent\",\"firstName\":\"care1\",\"lastName\":\"giver1\",\"gender\":\"Male\",\"email\":\"000000087tcg1@example.com\",\"birthDate\":\"1980-06-11\",\"phoneNumber\":\"(512) 757-9340\",\"role\":\"Parent\",\"caregiverType\":\"GRANDPARENT\",\"caregiverLevel\":\"PRIMARY\",\"relatedCRMGlobalCustomerID\":\"\"},{\"crmGlobalCustomerID\":\"\",\"parentcrmGlobalCustomerID\":\"\",\"contactType\":\"INITIALSIGNUPCAREGIVER\",\"customer\":\"true\",\"registrationSequence\":\"2\",\"accountType\":\"Person\",\"RecordTypeName\":\"Parent\",\"firstName\":\"care2\",\"lastName\":\"giver2\",\"gender\":\"Male\",\"email\":\"000000087tcg2@example.com\",\"birthDate\":\"1985-06-08\",\"phoneNumber\":\"(512) 757-9340\",\"role\":\"Parent\",\"caregiverType\":\"MOTHER\",\"caregiverLevel\":\"SECONDARY\",\"relatedCRMGlobalCustomerID\":\"\"}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="outputPayloadSystemResponseSFDC" format="json">
+      <types:shape format="weave" example="examples/samplePayloadOutputResponse-SFDC.json"><![CDATA[%dw 2.0
+
+type outputPayloadSystemResponseSFDC = {|
+  Response: Array<{|    sequenceId: String,     firstName: String,     lastName: String,     contactType: String,     sfdcStatus: Array<{|      crmGlobalId: String,       status: String,       message: Null,       errorDetails: {|        interfacecode: String,         creationdate: String,         errordescription: Null,         errortype: Null,         errorcause: Null,         errormessage: Null      |}    |}>
+  |}>
+|} {"example": "{\"Response\":[{\"sequenceId\":\"1\",\"firstName\":\"Ethan10\",\"lastName\":\"Hirsch10\",\"contactType\":\"INITIALSIGNUP\",\"sfdcStatus\":[{\"crmGlobalId\":\"000000289\",\"status\":\"Success\",\"message\":null,\"errorDetails\":{\"interfacecode\":\"Account Registration\",\"creationdate\":\"26\/Jul\/2019 08:29:48\",\"errordescription\":null,\"errortype\":null,\"errorcause\":null,\"errormessage\":null}}]}]}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="outputPayloadSystemResponseSAP" format="json">
+      <types:shape format="weave" example="examples/samplePayloadOutputResponse-SAP.json"><![CDATA[%dw 2.0
+
+type outputPayloadSystemResponseSAP = {|
+  Response: Array<{|    sequenceId: String,     firstName: String,     lastName: String,     contactType: String,     sapStatus: Array<{|      crmGlobalId: String,       status: String,       message: Null,       errorDetails: {|        interfacecode: String,         creationdate: String,         errordescription: Null,         errortype: Null,         errorcause: Null,         errormessage: Null      |}    |}>
+  |}>
+|} {"example": "{\"Response\":[{\"sequenceId\":\"1\",\"firstName\":\"Ethan10\",\"lastName\":\"Hirsch10\",\"contactType\":\"INITIALSIGNUP\",\"sapStatus\":[{\"crmGlobalId\":\"000000289\",\"status\":\"Success\",\"message\":null,\"errorDetails\":{\"interfacecode\":\"Account Registration\",\"creationdate\":\"26\/Jul\/2019 08:29:48\",\"errordescription\":null,\"errortype\":null,\"errorcause\":null,\"errormessage\":null}}]}]}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#fc0601f8-5505-42b9-977d-a25abdaf60fd">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="outputPayloadSystemResponseSFDC"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#cc14d28e-63eb-4986-9ba8-3b6e47b4fc0c">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="inputPayload"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#c1f7f202-b936-4d6b-acf4-c9f23c64def7">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="outputPayloadSystemResponseSFDC"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#f0e41f9a-a901-4b8a-94cc-bdc7337ddc50">
+    <types:processor-declaration>
+      <types:input-event>
+        <types:message>
+          <types:payload type="outputPayloadSystemResponseSAP"/>
+        </types:message>
+      </types:input-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="getAccountFlow" doc:id="4a1fc108-fd17-4941-bf2e-7cd8b8175ef3" >
+		<flow-ref doc:name="getTokenFlow Reference" doc:id="8ffcd121-1b80-423a-a43d-f890e7129acb" name="getTokenFlow"/>
+		<choice doc:name="Bearer Token generated?" doc:id="3c37a4f9-467d-4a31-9e05-faf397d6b09c" >
+			<when expression="#[payload.access_token !=null]">
+				<try doc:name="Try" doc:id="3c79d1b5-a2b6-4d83-9969-029cd6daeb18" >
+					<http:request method="GET" doc:name="Request" doc:id="ac43b021-d099-4894-9a96-b9786c4eddcf" url="#[vars.var_url ++ vars.var_servicePath]">
+						<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Authorization" : vars.var_accessToken
+}]]]></http:headers>
+						<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"ids" : vars.var_queryParam
+}]]]></http:query-params>
+					</http:request>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="429c769b-11d9-49e0-af9a-0f399e5f3207" type="HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:RETRY_EXHAUSTED, HTTP:SECURITY, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE">
+							<ee:transform doc:name="Transform Message" doc:id="4f7b1cf3-0713-4f43-bda0-2f6b20230922" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	interfacecode: "User Story=1921",
+	creationdate: now(),
+   "errordescription":   error.cause.message,
+   "errortype": error.errorType.identifier,
+   "errorcause": error.cause,
+   "errormessage": error.cause.errorMessage.payload,
+  ('Custom Message'    : 'Please check if the calling URL is functioning. If it is not responding please contact your system administrator') if error.errorType.identifier == "TIMEOUT"
+} ]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+						</on-error-continue>
+					</error-handler>
+				</try>
+			</when>
+			<otherwise >
+				<set-variable value="404" doc:name="httpStatus" doc:id="3104dd2a-7a7b-4d63-8861-72c6a22b3796" variableName="httpStatus"/>
+				<set-payload value='{Bearer Token is not generated"}' doc:name="Bearer Token not generated" doc:id="1f9b111f-afb6-4656-973b-e193fb91b25a" />
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="1a9c2808-9828-42c1-8d97-45cf9c8079bd" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="f7bc201f-de5a-48c7-8da7-1d117895bdd5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+	interfacecode: "User Story=1921",
+	creationdate: now(),
+   "errordescription":   error.cause.message,
+   "errortype": error.errorType.identifier,
+   "errorcause": error.cause,
+   "errormessage": error.cause.errorMessage.payload,
+  ('Custom Message'    : 'Please check if the calling URL is functioning. If it is not responding please contact your system administrator') if error.errorType.identifier == "TIMEOUT"
+} ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="getTokenFlow" doc:id="e93cde78-8bd9-4dbb-9775-c4fd66b7e95a" >
+		<try doc:name="Try" doc:id="86dd5fe0-ede4-481b-a265-557d781c4540" >
+			<http:request method="POST" doc:name="Request" doc:id="56d897b1-8cda-4b25-992f-dfa397ae8f69" config-ref="HTTP_Request_configuration" path="${auth.path}">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	grant_type:${auth.grant_type},
+	client_id:${auth.client_id},
+	client_secret:${auth.client_secret},
+	username:${auth.username},
+	password:${auth.password}
+}]]]></http:query-params>
+			</http:request>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="baa986e3-e305-4551-b8f6-1293c0cc88ad" type="HTTP:BAD_REQUEST, HTTP:CLIENT_SECURITY, HTTP:CONNECTIVITY, HTTP:FORBIDDEN, HTTP:INTERNAL_SERVER_ERROR, HTTP:METHOD_NOT_ALLOWED, HTTP:NOT_ACCEPTABLE, HTTP:NOT_FOUND, HTTP:PARSING, HTTP:RETRY_EXHAUSTED, HTTP:SECURITY, HTTP:SERVICE_UNAVAILABLE, HTTP:TIMEOUT, HTTP:TOO_MANY_REQUESTS, HTTP:UNAUTHORIZED, HTTP:UNSUPPORTED_MEDIA_TYPE">
+					<ee:transform doc:name="Transform Message" doc:id="c6b9ae8f-3f35-47d6-8a84-32fe3f2ced5a" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+	interfacecode: "User Story=1921",
+	creationdate: now(),
+   "errordescription":   error.cause.message,
+   "errortype": error.errorType.identifier,
+   "errorcause": error.cause,
+   "errormessage": error.cause.errorMessage.payload,
+  ('Custom Message'    : 'Please check if the calling URL is functioning. If it is not responding please contact your system administrator') if error.errorType.identifier == "TIMEOUT"
+} ]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="c18dee62-1185-4300-a510-0e7722251d2a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="var_accessToken" ><![CDATA["Bearer " ++ payload.access_token]]></ee:set-variable>
+				<ee:set-variable variableName="var_url" ><![CDATA[payload.instance_url]]></ee:set-variable>
+				<ee:set-variable variableName="var_servicePath" ><![CDATA["/services/apexrest/PersonAccount"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="776ecda1-4015-4ee1-9afc-e0b5301567c2" message="#[vars.var_accessToken]"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="805f19ba-ecc6-421b-82b7-b9da61a26212" type="ANY">
+				<ee:transform doc:name="Transform Message" doc:id="36a61395-c794-43a7-be54-437a9f6253e5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+	interfacecode: "User Story=1921",
+		creationdate: now(),
+	   "errordescription":   error.cause.message,
+   "errortype": error.errorType.identifier,
+   "errorcause": error.cause,
+   "errormessage": error.cause.errorMessage.payload,
+  ('Custom Message'    : 'Please check if the calling URL is functioning. If it is not responding please contact your system administrator') if error.errorType.identifier == "TIMEOUT"
+} ]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<error-handler name="implementationError_Handler" doc:id="793c50e4-f7aa-4aec-8544-c726fcb6f9ef" >
+		<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="54ab0737-fafc-45d3-8101-15d0d31aa1f2" type="ANY">
+			<ee:transform doc:name="Transform Message" doc:id="e7a552f3-d55a-43f4-8229-686cd7e14588" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[ %dw 2.0
+output application/json
+---
+{
+	interfacecode: "User Story=1921",
+	creationdate: now(),
+   "errordescription":   error.cause.message,
+   "errortype": error.errorType.identifier,
+   "errorcause": error.cause,
+   "errormessage": error.cause.errorMessage.payload,
+  ('Custom Message'    : 'Please check if the calling URL is functioning. If it is not responding please contact your system administrator') if error.errorType.identifier == "TIMEOUT"
+} ]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		</on-error-propagate>
+	</error-handler>
+</mule>
