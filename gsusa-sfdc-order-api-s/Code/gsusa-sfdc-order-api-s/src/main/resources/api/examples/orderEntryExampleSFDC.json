@@ -1,0 +1,12 @@
+  {
+  "basePrice": 100
+  ,"discountValues": 10
+  ,"entryNumber": 1
+  ,"product": "AEM"
+  ,"quantity": 1
+  ,"taxValues": 10
+  ,"totalprice": 110
+  ,"unit": "ML"
+  ,"contactOrderedFor": "JACK"
+  ,"councilFee": 100
+  }

@@ -1,0 +1,36 @@
+{ 
+    "orders": [ 
+        { 
+            "SequenceId": "1", 
+            "OrderedBy": "003000164", 
+            "OrderDate": "2019-07-09", 
+            "BillingAddress": { 
+                "Street": "525 W Monroe, Suite 500", 
+                "City": "Chicago", 
+                "State": "IL", 
+                "Country": "US", 
+                "PostalCode": "60661" 
+            },             
+            "ShippingAddress": { 
+                "Street": "525 W Monroe, Suite 500", 
+                "City": "Chicago", 
+                "State": "IL", 
+                "Country": "US", 
+                "PostalCode": "60661" 
+            }, 
+            "OrderAmount": 37.50, 
+            "RemainingBalance": 37.50, 
+            "HybrisId": "100001", 
+            "OrderLines": [{ 
+                "LineNumber": "1", 
+                "LineHybrisId": "200001", 
+                "Status": "Unpaid", 
+                "Price": 37.50, 
+                "OrderedFor": "003000165", 
+                "Council": "278", 
+                "LastPaymentDate": "2019-07-09", 
+                "ProductId": "Membership-001"
+            }]
+        } 
+    ] 
+}

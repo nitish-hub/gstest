@@ -1,0 +1,15 @@
+#%RAML 1.0 DataType
+
+type: object
+properties:
+  contactId?: string | nil
+  description?: string | nil
+  name?: string | nil
+  contactType?: string | nil
+  contactAddress?: !include AddressSFDC.raml
+  assignedCouncil?: string | nil
+  assignedTroop?: string | nil
+  birthDate?: string | nil
+  gradeType?: string | nil
+  genderType?: string | nil
+  crmGlobalCustomerId: string | nil
