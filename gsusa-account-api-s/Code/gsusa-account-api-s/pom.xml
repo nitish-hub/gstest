@@ -35,10 +35,10 @@
                 <applicationName>gsusa-troop-api-s</applicationName>
                 <environment>${environment_name}</environment>
                 <properties>
-                                <env>${env}</env>
-                                                                                                                        <client_id>${client_id}</client_id>
-                                                                                                                        <client_secret>${client_secret}</client_secret>
-                                                                                                                        <autodiscovery.id> ${autodiscovery_id }</autodiscovery.id>
+                     <env>$env</env>
+                     <client_id>$client_id</client_id>
+                     <client_secret>$client_secret</client_secret>
+                     <autodiscovery.id>$autodiscovery_id</autodiscovery.id>
                 </properties>
 </cloudHubDeployment>
 				
