@@ -20,10 +20,10 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 		</http:listener-connection>
     </http:listener-config>
     <apikit:config xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" name="gsusa-registration-api-p-config" raml="gsusa-registration-api-p.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
-    <global-property doc:name="Global Property" doc:id="0328adb4-9d75-4e2f-a10e-d3550f96a81c" name="env" value="dev" />
+    <global-property doc:name="Global Property" doc:id="0328adb4-9d75-4e2f-a10e-d3550f96a81c" name="env" value="DEV" />
 	<configuration-properties doc:name="Configuration properties" doc:id="e80e2a21-d94f-475f-b562-a95bf6215658" file="mule-artifact.properties" />
 	<configuration-properties doc:name="Configuration properties" doc:id="7d70369d-68bc-4a1b-b93f-a6b1ea9ad984" file="common.properties" />
-	<configuration-properties doc:name="Configuration properties" doc:id="d0134978-dbed-47ce-ae5c-bef1f29a49c5" file="mule.${env}.properties" />
+	<configuration-properties doc:name="Configuration properties" doc:id="d0134978-dbed-47ce-ae5c-bef1f29a49c5" file="config-${env}.properties" />
 	<http:request-config name="System_API_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="757976da-1d35-437f-80ac-8d96b2462e8a" >
 		<http:request-connection host="${api.sys.Host}" protocol="HTTPS"/>
 	</http:request-config>
