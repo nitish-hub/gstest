@@ -32,6 +32,6 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 		<http:request-connection protocol="HTTPS" host="${auth.sfdc.authTokenrequestURL}" >
 		</http:request-connection>
 	</http:request-config>
-	<api-gateway:autodiscovery apiId="${api.autodiscoveryid}" doc:name="API Autodiscovery" doc:id="98602e99-e160-42e8-9a0b-a664e2883587" flowRef="gsusa-registration-api-s-main" />
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="98602e99-e160-42e8-9a0b-a664e2883587" flowRef="gsusa-registration-api-s-main" />
 	
 </mule>
