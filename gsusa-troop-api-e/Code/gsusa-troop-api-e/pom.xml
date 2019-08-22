@@ -30,7 +30,7 @@
 						<muleVersion>${app.runtime}</muleVersion>
 						<username>${username}</username>
 						<password>${password}</password>
-						<applicationName>gsusa-troop-api-e-${env}</applicationName>
+						<applicationName>${application_name}-${env}</applicationName>
 						<environment>${environment_name}</environment>
 						<properties>
 							 <env>${env}</env>
