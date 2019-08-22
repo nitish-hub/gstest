@@ -95,7 +95,6 @@ output application/json
 	</flow>
 	<flow name="SFDCOrderCreateFlow" doc:id="eae9d8c4-a8af-4ba6-86eb-54d90ae7be5c" >
 		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="f022bd46-a8a5-419a-ada2-39ceeb834731" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.sfdc.queue}" outputMimeType="application/json">
-			<redelivery-policy maxRedeliveryCount="3" />
 		</anypoint-mq:subscriber>
 		<try doc:name="Try" doc:id="f889262b-45d2-403c-8ca8-658a262697d1" >
 			<set-variable value="#[payload]" doc:name="Set Order Data" doc:id="ebffbd4a-c030-4d2e-98f0-a9ccc84e1c94" variableName="OrderData"/>
@@ -108,6 +107,7 @@ output application/json
 	client_secret : ${sfdc.order.api.client_secret}
 }]]]></http:headers>
 			</http:request>
+			<logger level="INFO" doc:name="Logger" doc:id="b40686fe-5418-41de-b471-f61849f722af" message="#[payload]" />
 			<error-handler >
 
 
@@ -144,7 +144,7 @@ output application/json
 </on-error-continue>
 			</error-handler>
 		</try>
-		<logger level="INFO" doc:name="Logger" doc:id="eba83443-ff07-440b-ad1a-4b032c43dc6c" message="#[payload]"/>
+		<logger level="INFO" doc:name="Logger" doc:id="eba83443-ff07-440b-ad1a-4b032c43dc6c" message="#['Order creation process finished']"/>
 		<error-handler >
 			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c8d4b83e-073c-4ecd-a0fb-adcf9cc87922" type="ANY">
 				<logger level="INFO" doc:name="Logger" doc:id="0d72d750-e1b4-4d4f-ae82-165f04ea9461" message="Exception occurred in SFDCOrderCreateFlow" />
