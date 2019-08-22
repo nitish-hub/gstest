@@ -27,6 +27,6 @@ http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mu
 	<http:request-config name="RegistrationHost_HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="757976da-1d35-437f-80ac-8d96b2462e8a" >
 		<http:request-connection host="${api.process.Host}" protocol="HTTPS"/>
 	</http:request-config>
-	<api-gateway:autodiscovery apiId="${api.autodiscoveryid}" doc:name="API Autodiscovery" doc:id="9664ac25-d6e8-4915-9908-188ba729aa6b" flowRef="gsusa-registration-api-e-main" />
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="9664ac25-d6e8-4915-9908-188ba729aa6b" flowRef="gsusa-registration-api-e-main" />
 	
 </mule>

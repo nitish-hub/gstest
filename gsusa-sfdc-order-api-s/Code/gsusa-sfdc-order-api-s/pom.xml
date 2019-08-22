@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.mycompany</groupId>
-	<artifactId>gsusa-order-api-s</artifactId>
+	<artifactId>gsusa-sfdc-order-api-s</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>mule-application</packaging>
 
@@ -31,13 +31,13 @@
 						<muleVersion>${app.runtime}</muleVersion>
 						<username>${username}</username>
 						<password>${password}</password>
-						<applicationName>gsusa-sfdc-order-api-s</applicationName>
-						<environment>GSMULEPU-TEST</environment>
+						<applicationName>${application_name}-${env}</applicationName>
+						<environment>${environment_name}</environment>
 						<properties>
-						     <env>$env</env>
-						     <client_id>$client_id</client_id>
-						     <client_secret>$client_secret</client_secret>
-						     <autodiscovery.id>$autodiscovery_id</autodiscovery.id>
+							 <env>${env}</env>
+							 <anypoint.platform.client_id>${client_id}</anypoint.platform.client_id>
+							 <anypoint.platform.client_secret>${client_secret}</anypoint.platform.client_secret>
+							 <autodiscovery.id>${autodiscovery_id}</autodiscovery.id>
 						</properties>
 					</cloudHubDeployment>
 					<classifier>mule-application</classifier>
