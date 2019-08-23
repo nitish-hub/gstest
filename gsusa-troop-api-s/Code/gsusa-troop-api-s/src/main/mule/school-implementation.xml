@@ -20,7 +20,6 @@ payload
 ]]]></ee:set-payload>
 				</ee:message>
 			</ee:transform>
-			<logger level="INFO" doc:name="Logger" doc:id="526caa5c-6a82-4355-a1fa-fe99eeaed506" message="#[payload]"/>
 			<try doc:name="Try" doc:id="518e718b-6d05-49d8-ba3e-e893f36887c6" >
 				<http:request method="POST" doc:name="Request" doc:id="d92cb01d-c14d-4f1e-bf90-c83a5b3930e7" config-ref="SOLR_HTTPS_Configuration" path="${solr.school}">
 					<http:query-params ><![CDATA[#[output application/java
@@ -42,7 +41,8 @@ output application/json
       "creationdate":now(),
       "errordescription":error.cause.errorMessage.payload,
       "errortype":error.errorType.identifier,
-      "errormessage":error.cause.message
+      "errormessage":error.cause.message,
+      "payload": payload
 }]]></ee:set-payload>
 							</ee:message>
 						</ee:transform>
