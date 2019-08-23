@@ -12,5 +12,5 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="a930b8d4-cf5e-4873-9236-ebb2fa054b09" >
 		<http:request-connection protocol="HTTPS" host="cs42.salesforce.com" />
 	</http:request-config>
-	<api-gateway:autodiscovery apiId="15746084" doc:name="API Autodiscovery" doc:id="aa0d8516-e806-4f82-b6a7-91c367cc7ca2" flowRef="gsusa-account-api-s-main" />
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="aa0d8516-e806-4f82-b6a7-91c367cc7ca2" flowRef="gsusa-account-api-s-main" />
 </mule>
