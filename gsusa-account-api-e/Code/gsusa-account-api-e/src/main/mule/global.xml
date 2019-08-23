@@ -10,5 +10,5 @@ http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/m
 		<http:request-connection host="${sys.host}" protocol="HTTPS"/>
 	</http:request-config>
 	<configuration doc:name="Configuration" doc:id="e3b841c5-8599-471b-beb0-460cb2d21ac6" defaultErrorHandler-ref="implementationError_Handler" />
-	<api-gateway:autodiscovery apiId="15739603" doc:name="API Autodiscovery" doc:id="80a83014-31a3-4d55-9dab-a822cca61c42" flowRef="gsusa-account-api-e-main" />
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="80a83014-31a3-4d55-9dab-a822cca61c42" flowRef="gsusa-account-api-e-main" />
 </mule>
