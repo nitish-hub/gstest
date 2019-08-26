@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="new-test-suite.xml" />
+	<munit:test name="createOrderSFDCFlowTest" description="Test" doc:id="ade7df09-74a4-4be2-98ba-c33ecc701280" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock token retrieve" doc:id="2ca83e0e-7513-4022-b056-55f12ade41bc" processor="os:retrieve">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute attributeName="doc:name" whereValue="Retrieve Token" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#['NONDUMMY']"/>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock SFDC POST call" doc:id="99fd99d7-065c-4d04-803e-aa9d56834f15" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute attributeName="doc:name" whereValue="POST - SFDC" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:attributes value="#[{statusCode:200}]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<set-payload value='{
+  "orders": [
+    {
+      "SequenceId": "1",
+      "OrderedBy": "000000094",
+      "OrderDate": "2019-06-27",
+      "BillingAddress": {
+        "Street": "223 E Concord Street",
+        "City": "sanford",
+        "State": "FL",
+        "Country": "US",
+        "PostalCode": "32801"
+      },
+      "ShippingAddress": {
+        "Street": "223 E Concord Street",
+        "City": "sanford",
+        "State": "FL",
+        "Country": "US",
+        "PostalCode": "32801"
+      },
+      "OrderAmount": 0,
+      "RemainingBalance": 0.0,
+      "HybrisId": "00002001",
+      "OrderLines": [
+        {
+          "LineNumber": "1",
+          "LineHybrisId": "0",
+          "Status": "PAID",
+          "Price": 50,
+          "OrderedFor": "000000095",
+          "Council": "278",
+          "LastPaymentDate": "2019-06-27",
+          "EventDate": "2019-06-27",
+          "ProductId": "Membership-001",
+                          "Troops": [
+                    "Troop 1234"
+                ]
+        },
+        {
+          "LineNumber": "2",
+          "LineHybrisId": "1",
+          "Status": "PAID",
+          "Price": 51,
+          "OrderedFor": "000000093",
+          "Council": "278",
+          "LastPaymentDate": "2019-06-27",
+          "EventDate": "2019-06-27",
+          "ProductId": "Membership-001",
+                          "Troops": [
+                    "Troop 1234"
+                ]
+        }
+      ]
+    }
+  ]
+}' doc:name="Set Payload" doc:id="cb2869b2-b2af-4aef-8415-970375aea1a3" mimeType="application/json"/>
+			<flow-ref doc:name="Flow-ref to createOrderSFDCFlow" doc:id="76c25a38-4492-4b1e-be46-76154ca2f44a" name="createOrderSFDCFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="fdeba449-1e2b-4f2b-ae8b-9c30c8cd574d" expression="#[attributes.statusCode]" is='#[MunitTools::equalTo(200)]' message="Success!!"/>
+		</munit:validation>
+	</munit:test>
+
+	<munit:test name="createOrderSFDCFlowTestNegative" description="Test" doc:id="8ea5a0e1-70d6-4c82-a673-b82e5c1e3cd1" >
+		<munit:behavior >
+			<munit-tools:mock-when doc:name="Mock token retrieve" doc:id="d5536efc-dd3b-41eb-879b-af1afc5723fd" processor="os:retrieve">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute attributeName="doc:name" whereValue="Retrieve Token" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:payload value="#['NONDUMMY']"/>
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+			<munit-tools:mock-when doc:name="Mock SFDC POST call" doc:id="36781a3a-f8f0-4a14-8be5-13e117cf9578" processor="http:request">
+				<munit-tools:with-attributes >
+					<munit-tools:with-attribute attributeName="doc:name" whereValue="POST - SFDC" />
+				</munit-tools:with-attributes>
+				<munit-tools:then-return >
+					<munit-tools:attributes value="#[{statusCode:400}]" />
+				</munit-tools:then-return>
+			</munit-tools:mock-when>
+		</munit:behavior>
+		<munit:execution >
+			<set-payload value='{
+  "orders": [
+    {
+      "SequenceId": "1",
+      "OrderedBy": "000000094",
+      "OrderDate": "2019-06-27",
+      "BillingAddress": {
+        "Street": "223 E Concord Street",
+        "City": "sanford",
+        "State": "FL",
+        "Country": "US",
+        "PostalCode": "32801"
+      },
+      "ShippingAddress": {
+        "Street": "223 E Concord Street",
+        "City": "sanford",
+        "State": "FL",
+        "Country": "US",
+        "PostalCode": "32801"
+      },
+      "OrderAmount": 0,
+      "RemainingBalance": 0.0,
+      "HybrisId": "00002001",
+      "OrderLines": [
+        {
+          "LineNumber": "1",
+          "LineHybrisId": "0",
+          "Status": "PAID",
+          "Price": 50,
+          "OrderedFor": "000000095",
+          "Council": "278",
+          "LastPaymentDate": "2019-06-27",
+          "EventDate": "2019-06-27",
+          "ProductId": "Membership-001",
+                          "Troops": [
+                    "Troop 1234"
+                ]
+        },
+        {
+          "LineNumber": "2",
+          "LineHybrisId": "1",
+          "Status": "PAID",
+          "Price": 51,
+          "OrderedFor": "000000093",
+          "Council": "278",
+          "LastPaymentDate": "2019-06-27",
+          "EventDate": "2019-06-27",
+          "ProductId": "Membership-001",
+                          "Troops": [
+                    "Troop 1234"
+                ]
+        }
+      ]
+    }
+  ]
+}' doc:name="Set Payload" doc:id="6bab2c0a-7202-4180-85ff-d8155ce0a689" mimeType="application/json"/>
+			<flow-ref doc:name="Flow-ref to createOrderSFDCFlow" doc:id="51842e7d-38b8-4844-8ef4-836c598e0f4b" name="createOrderSFDCFlow"/>
+		</munit:execution>
+		<munit:validation >
+			<munit-tools:assert-that doc:name="Assert that" doc:id="503f4145-99ca-4e58-aa73-6c492826126c" expression="#[attributes.statusCode]" is='#[MunitTools::equalTo(400)]' message="Success!!"/>
+		</munit:validation>
+	</munit:test>
+
+
+</mule>
