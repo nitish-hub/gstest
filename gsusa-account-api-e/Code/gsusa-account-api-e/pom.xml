@@ -31,7 +31,7 @@
                 <muleVersion>${app.runtime}</muleVersion>
                 <username>${username}</username>
                 <password>${password}</password>
-				<applicationName>${application_name}-${env}</applicationName>
+				<applicationName>gsusa-account-api-e-${env}</applicationName>
 				<environment>${environment_name}</environment>
 				<properties>
 					 <env>${env}</env>

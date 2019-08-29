@@ -30,7 +30,7 @@
 						<muleVersion>${app.runtime}</muleVersion>
 						<username>${username}</username>
 						<password>${password}</password>
-						<applicationName>${application_name}-${env}</applicationName>
+						<applicationName>gsusa-order-api-p-${env}</applicationName>
 						<environment>${environment_name}</environment>
 						<properties>
 							 <env>${env}</env>
