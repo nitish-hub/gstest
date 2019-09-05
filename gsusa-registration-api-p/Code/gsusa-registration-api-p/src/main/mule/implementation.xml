@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<flow name="callSystemsAPIFlow" doc:id="de156be9-a70f-43b4-8a1e-14361efe3015" >
+		<ee:transform doc:name="PayloadData from UI" doc:id="cc14d28e-63eb-4986-9ba8-3b6e47b4fc0c" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="DataPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<set-variable value="#[message.attributes.headers.client_id]" doc:name="Set ClientID" doc:id="d22a2090-6390-4aff-971c-79c81320ccf5" variableName="client_id" />
+		<set-variable value="#[message.attributes.headers.client_secret]" doc:name="Set ClientSecret" doc:id="1d739ad2-4120-4e23-9932-ab74b38c891f" variableName="client_secret" />
+		<choice doc:name="Is CRM Global ID Null?" doc:id="0b961fd1-9556-4edf-9b64-96949f11c6d3" >
+			<when expression="#[payload.Register[0].crmGlobalCustomerID == '']">
+				<flow-ref doc:name="callSFDCSystemAPIFlow" doc:id="bde9e007-bd51-45cc-bf82-b726f58c0a60" name="callSFDCSystemAPIFlow"/>
+				<logger level="INFO" doc:name="Payload Response SFDC System API Log" doc:id="6fa37fb5-49fa-47d6-af2c-d9bd2fcaf49f" message="#[payload]"/>
+				<ee:transform doc:name="Fetching GlobalID from SFDC Response into Variable" doc:id="fc0601f8-5505-42b9-977d-a25abdaf60fd" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="sfdcResponse" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+
+ "Response":  (vars["DataPayload"].Register default []) map(object,index) -> using (id = object.registrationSequence) {
+	sequenceId  :id,
+   ( payload.Response default [] filter ($.*sequenceId contains id)  map (responseObject) -> 
+		"crmGlobalId": if(responseObject.sfdcStatus.crmGlobalId !=null) responseObject.sfdcStatus.crmGlobalId else ""
+   )
+},
+
+ "ResponseCG":  (vars["DataPayload"].Caregivers default []) map(object,index) -> using (id = object.registrationSequence) {
+	sequenceId  :id,
+    (payload.Response default [] filter ($.*sequenceId contains id)  map (responseObject) -> {
+		"crmGlobalId":if(responseObject.sfdcStatus.crmGlobalId !=null) responseObject.sfdcStatus.crmGlobalId else ""
+   })
+}  
+ 
+}]]></ee:set-variable>
+						<ee:set-variable variableName="sfdcOutput" ><![CDATA[payload]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<logger level="INFO" doc:name="Mapped GlobalIds with RegistrationSequence" doc:id="1e24e88b-dc37-448a-b19c-9184ef96f54d" message="#[vars.sfdcResponse]" />
+				<choice doc:name="IS CRMGlobalId's Generated or Not?" doc:id="210af2a6-3249-45d6-a3b9-a82ef85b6fbe">
+					<when expression='#[vars["sfdcResponse"].Response[0].crmGlobalId[0] != null and vars["DataPayload"].Register[0].accountType == ${account.personRecordType}]' doc:id="8f9baea0-002a-4cf8-a604-444dcae6879d">
+						<ee:transform doc:name="Map Data for SAP Input" doc:id="5aa476e4-7fca-4643-8b9c-14be92c329a1">
+					<ee:message>
+						<ee:set-payload resource="dwl/sap-create-update-transformed-payloadlogic.dwl" />
+					</ee:message>
+				</ee:transform>
+						<ee:transform doc:name="Payload Transformation" doc:id="a42a7566-8364-4291-854e-5d30012d653f">
+					<ee:message>
+					</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="DataPayload" ><![CDATA[%dw 2.0
+output application/json
+---
+payload.Data]]></ee:set-variable>
+							</ee:variables>
+				</ee:transform>
+						<logger level="INFO" doc:name="Logger" doc:id="645a9527-1034-40d4-a2e8-2a32f890047c" message="#[vars.DataPayload]" />
+						<flow-ref doc:name="callSAPSystemAPIFlow" doc:id="56a992b1-61e4-432b-9d6b-36f7240fc2be" name="callSAPSystemAPIFlow" />
+						<ee:transform doc:name="Transform Message" doc:id="2e7261e4-c49b-4e0e-9b8f-559f93e864ef">
+							<ee:message>
+							</ee:message>
+							<ee:variables >
+								<ee:set-variable variableName="sapOutput" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+						<ee:transform doc:name="Final Output Response" doc:id="45c394d3-58fc-4c07-b601-66d0fed0e295" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.sfdcOutput ++ vars.sapOutput]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<when expression='#[vars["sfdcResponse"].Response[0].crmGlobalId[0] != null and vars["DataPayload"].Register[0].accountType == ${account.businessRecordType}]'>
+						<ee:transform doc:name="Final Output Response for Business Accounts" doc:id="28baed8a-84b8-4b32-8711-a2cba8786356" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+vars.sfdcOutput]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<otherwise >
+						<ee:transform doc:name="Output Error Response" doc:id="acac4fa3-2f55-4199-89c5-ef8fd0b9a8c5" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value="#[200]" doc:name="Set http status" doc:id="f3141db7-0a4c-4048-8d85-2e55f8f15612" variableName="httpStatus" />
+						<set-payload value="#[payload]" doc:name="Set Payload" doc:id="e63722a8-63e7-43c1-ac56-547381fb3804" />
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="9e0cf12c-9377-4ec5-b150-72dcb0890ca7">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status": "Error", 
+	"message": "There is some issue in Payload Data from UI"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[200]" doc:name="Set http status" doc:id="59b0296e-8494-40e4-9309-f3e01a08ad2f" variableName="httpStatus" />
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="069a9104-8440-41f7-bfe6-3aaca7c64c97" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="callSFDCSystemAPIFlow" doc:id="1bd2bc37-e8c0-4afa-9d84-53a21d20a642">
+		<try doc:name="Try" doc:id="608ea275-d458-4096-a37d-0b61f5e269fa">
+			<http:request method="POST" doc:name="SFDC System API Request" doc:id="e4e7827e-7b5b-43e3-b5ca-8155c463c514" config-ref="System_API_HTTP_Request_configuration" path="${api.sys.sfdcResourcePath}">
+				<http:body><![CDATA[#[%dw 2.0
+output application/json
+---
+payload]]]></http:body>
+				<http:headers><![CDATA[#[output application/java
+---
+{
+	"client_id" : attributes.headers.client_id,
+	"client_secret" : attributes.headers.client_secret
+}]]]></http:headers>
+			</http:request>
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d16006ac-4b77-473b-b9d9-656c801e7b95" type="ANY" >
+					<ee:transform doc:name="SFDC System API Output Response" doc:id="c1f7f202-b936-4d6b-acf4-c9f23c64def7" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<choice doc:name="Is GS Account Created/Updated in SFDC" doc:id="84ba6422-e01e-468e-ae46-858fe94c41bb">
+			<when expression="#[attributes.statusCode == 200]">
+				<ee:transform doc:name="SFDC System API Response" doc:id="63ae0a3c-f464-4626-8f42-d85caf888e4b">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise>
+				<ee:transform doc:name="SFDC System API Default Response" doc:id="248059d1-299d-49c0-9a4c-d55683192b97">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="callSAPSystemAPIFlow" doc:id="871a160f-9849-4fa2-8615-d82b89361ed4">
+		<try doc:name="Try" doc:id="ecec610a-3c8e-4c1f-bc1c-4a94b22c913b" >
+			<http:request method="POST" doc:name="SAP System API Request" doc:id="af027cde-08d2-4e32-9b61-503156e1ab37" path="${api.sys.sapResourcePath}" config-ref="System_API_HTTP_Request_configuration">
+				<http:body ><![CDATA[#[%dw 2.0
+output application/json
+---
+vars.DataPayload]]]></http:body>
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"client_id" : vars.client_id,
+	"client_secret" : vars.client_secret
+}]]]></http:headers>
+			</http:request>
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6068812f-2bc5-41b2-ba59-f301b9c04418" type="ANY">
+					<ee:transform doc:name="SAP System API Output Response" doc:id="f0e41f9a-a901-4b8a-94cc-bdc7337ddc50" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "interfaceCode": "${interface.code.val}",
+    "creationDate":(now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+    "errorDescription": error.description,  
+    "errorType": (error.errorType.namespace default ' ') ++ ":" ++ (error.errorType.identifier default ' '), 
+    "errorCause":error.cause.message,
+    "errorMessage":error.cause.errorMessage.payload,
+    "statusCode" :error.cause.errorMessage.attributes.statusCode
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<choice doc:name="Is GS Account Created/Updated in SAP" doc:id="df9d5817-5e57-41e8-91ad-fec4e60ec041" >
+			<when expression="#[attributes.statusCode == 200]" >
+				<ee:transform doc:name="SAP System API Response" doc:id="d51c13fa-906a-4ec2-90f9-f1a46a7a78b1" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="SAP System API Default Response" doc:id="6b40d331-abfd-4e08-8367-904660944989" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

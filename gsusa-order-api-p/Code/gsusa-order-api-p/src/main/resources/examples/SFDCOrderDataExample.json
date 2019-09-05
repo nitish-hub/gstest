@@ -1,0 +1,38 @@
+{
+    "orders": [
+        {
+            "SequenceId" : "1",
+            "OrderedBy" : "003000164",
+            "OrderDate" : "2019-07-15",
+            "BillingAddress" : {
+                "Street" : "525 W Monroe, Suite 500",
+                "City" : "Chicago",
+                "State" : "IL",
+                "Country" : "US",
+                "PostalCode" : "60661"
+            },            
+            "ShippingAddress" : {
+                "Street" : "420 5th Ave",
+                "City" : "New York",
+                "State" : "NY",
+                "Country" : "US",
+                "PostalCode" : "10018"
+            },
+            "OrderAmount" : 37.50,
+            "RemainingBalance" : 21.00,
+            "HybrisId" : "100009",
+            "OrderLines" : [{
+                "LineNumber": "1",
+                "LineHybrisId": "200010",
+                "Status" : "Partially Paid",
+                "Price" : 37.50,
+                "OrderedFor" : "003000165",
+                "Council" : "278",
+                "LastPaymentDate" : "2019-07-15",
+                "EventDate" : "2019-07-15",
+                "ProductId" : "Membership-001",
+                "Troop" : "Troop 1234"
+            }]
+        }
+    ]
+}

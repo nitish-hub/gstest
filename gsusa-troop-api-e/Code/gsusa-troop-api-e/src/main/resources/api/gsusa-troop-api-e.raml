@@ -1,0 +1,85 @@
+#%RAML 1.0
+title: gsusa-troop-api-e
+version: v1.0
+description: This Experience API will call the Load Troop system API to create case in salesforce.
+
+traits:
+  client-id-required:
+    queryParameters:
+      client_id:
+        type: string
+      client_secret:
+        type: string
+
+types:
+  errorResponse:      !include dataTypes/errorResponse.raml
+  case:               !include dataTypes/caseRequest.raml
+  caseSuccessReponse: !include dataTypes/caseSuccessResponse.raml
+  caseErrorResponse:  !include dataTypes/caseErrorResponse.raml
+
+           
+/sfdc:
+ /v1:
+   /case:
+    description: This API will be used to create or update CASE in salesforce  
+    /create:
+     displayName: Create new case in salesforce
+     description: This entity will create case in salesforce
+     post:
+      is:
+        - client-id-required
+      description: Create new case in salesforce
+
+      body:
+        application/json:
+          type: case
+          example: !include examples/postCase.json
+      responses:
+        201:
+          description: Case creation
+          body:
+            application/json:
+              type: caseSuccessReponse
+              example: |
+               {
+                  "status": "Success",
+                  "statusMessage": "Record enqueued"
+                }
+        400:
+          body:
+            application/json:
+              type: caseErrorResponse
+              example: |
+                [
+                  {
+                   "SequenceId": "1",
+                   "ReturnStatus": "Error",
+                   "ErrorMessage": "A Record Type was not found with Developer Name                                     invalid for type Case."
+                   }
+                ]
+        401:
+          body:
+            application/json:
+              type: caseErrorResponse
+              example: |
+                [
+                  {
+                   "SequenceId": "1",
+                   "ReturnStatus": "Error",
+                   "ErrorMessage": "Unauthorized Access"
+                   }
+                ]
+        403:
+          body:
+            application/json:
+              type: errorResponse
+              example: |
+                {
+                  "interfacecode": "UIToSFDCCreateCase" ,
+                  "creationdate": "20-Aug-2019",
+                  "errordescription": "Malfunctioned request",
+                  "errortype": "HTTP",
+                  "errorcause": "",
+                  "errormessage": "Payload was incorrect"
+                   }
+        

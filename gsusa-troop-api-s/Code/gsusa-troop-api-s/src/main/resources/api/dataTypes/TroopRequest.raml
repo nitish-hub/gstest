@@ -1,0 +1,34 @@
+#%RAML 1.0 DataType
+
+#This file is located at dataTypes/TroopRequest.raml
+
+type: object
+properties:
+  id?: string | nil
+  latAndLong?: string | nil
+  zipCode?: string | nil
+  troopNumber?: string | nil
+  name?: string | nil
+  grade?: 
+    type: array
+  councilCode?: string | nil
+  councilName?: string | nil
+  remainingVolunteers?: integer | nil
+  remainingGirls?: integer | nil
+  languagesSpoken?: 
+    type: array
+  troopAttributes?: 
+    type: array
+  troopDescription?: string | nil
+  school?: 
+    type: array
+  urlOfCouncilImage?: string | nil
+  troopStartDate?: datetime | nil
+  troopEndDate?: datetime | nil
+  displayInCatalog?: boolean | nil
+  parentAccountNumber?: string | nil
+  totalVolunteers?: integer | nil
+  totalGirls?: integer | nil
+  troopFormationStatus?: string | nil
+  volunteerPositions?: 
+    type: array

@@ -1,0 +1,109 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="inputDataPayload" format="json">
+      <types:shape format="weave" example="examples/inputOrderPayload-1.json"><![CDATA[%dw 2.0
+
+type inputDataPayload = {|
+  commerceOrderNumber: String, 
+  deliveryOrderGroups: Array<{|    entries: Array<{|      contactInfo: {|        assignedCouncil: String,         assignedTroop: String,         contactType: String,         crmGlobalCustomerID: String,         customer: Boolean,         email: String,         firstName: String,         genderType: String,         lastName: String,         phoneNumber: String      |},       entryNumber: Number {"typeId": "int"},       product: {|        netSuiteItem: String,         netSuiteGLLocation: String,         startDate: String,         endDate: String,         membershipType: String,         councilId: String,         duration: String,         serviceUnit: String,         ActivityType: String,         requiredAge: String,         requiredGradeType: String,         physicalLocation: String,         sessionID: String,         categories: Array<{|          code: String,           name: String        |}>, 
+        code: String, 
+        configurable: Boolean, 
+        name: String, 
+        purchasable: Boolean, 
+        stock: {| stockLevelStatus: String |}, 
+        url: String
+      |}, 
+      quantity: Number {"typeId": "int"}, 
+      totalPrice: {|
+        currencyIso: String, 
+        value: Number {"typeId": "int"}
+      |}, 
+      paymentMode: String
+    |}>, 
+    totalPriceWithTax: {|
+      currencyIso: String, 
+      formattedValue: String, 
+      priceType: String, 
+      value: Number {"typeId": "int"}
+    |}
+  |}>, 
+  orderDiscounts: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  paymentInfo: {|
+    accountHolderName: String, 
+    billingAddress: {|
+      country: {| isocode: String |}, 
+      defaultAddress: Boolean, 
+      id: String, 
+      line1: String, 
+      postalCode: String, 
+      region: {| isocode: String |}, 
+      town: String
+    |}, 
+    cardNumber: String, 
+    cardType: {|
+      code: String, 
+      name: String
+    |}, 
+    defaultPayment: Boolean, 
+    expiryMonth: String, 
+    expiryYear: String, 
+    id: String, 
+    saved: Boolean, 
+    subscriptionId: String
+  |}, 
+  productDiscounts: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  subTotal: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  totalDiscounts: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  totalItems: Number {"typeId": "int"}, 
+  totalPrice: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  totalPriceWithTax: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  totalTax: {|
+    currencyIso: String, 
+    formattedValue: String, 
+    priceType: String, 
+    value: Number {"typeId": "int"}
+  |}, 
+  user: {|
+    name: String, 
+    uid: String
+  |}, 
+  created: String
+|} {"example": "{\"commerceOrderNumber\":\"00002001\",\"deliveryOrderGroups\":[{\"entries\":[{\"contactInfo\":{\"assignedCouncil\":\"Council1000\",\"assignedTroop\":\"Troop123\",\"contactType\":\"GIRL\",\"crmGlobalCustomerID\":\"GLOBAL2000-a\",\"customer\":false,\"email\":\"testemail1a@mailinator.com\",\"firstName\":\"Michele\",\"genderType\":\"GIRL\",\"lastName\":\"Damron\",\"phoneNumber\":\"4076191234\"},\"entryNumber\":0,\"product\":{\"netSuiteItem\":\"HORSECAMP450\",\"netSuiteGLLocation\":\"\",\"startDate\":\"01012019\",\"endDate\":\"12312019\",\"membershipType\":\"GIRLMEMBERSHIP\",\"councilId\":\"Council1000\",\"duration\":\"365\",\"serviceUnit\":\"\",\"ActivityType\":\"\",\"requiredAge\":\"\",\"requiredGradeType\":\"\",\"physicalLocation\":\"\",\"sessionID\":\"\",\"categories\":[{\"code\":\"LM10001\",\"name\":\"Girl Memberships\"}],\"code\":\"M01\",\"configurable\":false,\"name\":\"Girl Membership Current Year\",\"purchasable\":true,\"stock\":{\"stockLevelStatus\":\"inStock\"},\"url\":\"\/Memberships\/Girl-Memberships\/Girl-Membership-Current-Year\/p\/M01\"},\"quantity\":1,\"totalPrice\":{\"currencyIso\":\"USD\",\"value\":25},\"paymentMode\":\"paymentCard\"},{\"contactInfo\":{\"assignedCouncil\":\"Council1000\",\"assignedTroop\":\"Troop123\",\"contactType\":\"GIRL\",\"crmGlobalCustomerID\":\"GLOBAL2000-a\",\"customer\":false,\"email\":\"testemail1a@mailinator.com\",\"firstName\":\"Michele\",\"genderType\":\"GIRL\",\"lastName\":\"Damron\",\"phoneNumber\":\"4076191234\"},\"entryNumber\":1,\"product\":{\"netSuiteItem\":\"HORSECAMP450\",\"netSuiteGLLocation\":\"\",\"startDate\":\"01012019\",\"endDate\":\"12312019\",\"membershipType\":\"GIRLMEMBERSHIP\",\"councilId\":\"Council1000\",\"duration\":\"365\",\"serviceUnit\":\"\",\"ActivityType\":\"\",\"requiredAge\":\"\",\"requiredGradeType\":\"\",\"physicalLocation\":\"\",\"sessionID\":\"\",\"categories\":[{\"code\":\"LM20002\",\"name\":\"Adult Service Fee\"}],\"code\":\"council_1000_Girl_Annual\",\"configurable\":false,\"purchasable\":true,\"stock\":{\"stockLevelStatus\":\"inStock\"},\"url\":\"\/Memberships\/Council-Service-Fee\/Adult-Service-Fee\/\/p\/council_1000_Girl_Annual\"},\"quantity\":1,\"totalPrice\":{\"currencyIso\":\"USD\",\"value\":3},\"paymentMode\":\"financialAid\"}],\"totalPriceWithTax\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$28.00\",\"priceType\":\"BUY\",\"value\":28}}],\"orderDiscounts\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$0.00\",\"priceType\":\"BUY\",\"value\":0},\"paymentInfo\":{\"accountHolderName\":\"Gaurav\",\"billingAddress\":{\"country\":{\"isocode\":\"US\"},\"defaultAddress\":false,\"id\":\"8796125888535\",\"line1\":\"223 E Concord Street\",\"postalCode\":\"32801\",\"region\":{\"isocode\":\"US-FL\"},\"town\":\"sanford\"},\"cardNumber\":\"************0001\",\"cardType\":{\"code\":\"visa\",\"name\":\"Visa\"},\"defaultPayment\":false,\"expiryMonth\":\"12\",\"expiryYear\":\"2021\",\"id\":\"8796125855786\",\"saved\":false,\"subscriptionId\":\"testemail1@mailinator.com_2dd83c63-68f1-4d98-9035-81a96890638c\"},\"productDiscounts\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$0.00\",\"priceType\":\"BUY\",\"value\":0},\"subTotal\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$28.00\",\"priceType\":\"BUY\",\"value\":28},\"totalDiscounts\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$0.00\",\"priceType\":\"BUY\",\"value\":0},\"totalItems\":2,\"totalPrice\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$28.00\",\"priceType\":\"BUY\",\"value\":28},\"totalPriceWithTax\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$28.00\",\"priceType\":\"BUY\",\"value\":28},\"totalTax\":{\"currencyIso\":\"USD\",\"formattedValue\":\"$0.00\",\"priceType\":\"BUY\",\"value\":0},\"user\":{\"name\":\"Jonathan Damron\",\"uid\":\"testemail1@mailinator.com\"},\"created\":\"2019-06-27T21:16:25+0000\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#6b9c8b9b-6751-45b9-b1df-b0678d0cf864"/>
+  <types:enrichment select="#e66fe537-16d2-444c-99af-404a9fa5aa31"/>
+</types:mule>

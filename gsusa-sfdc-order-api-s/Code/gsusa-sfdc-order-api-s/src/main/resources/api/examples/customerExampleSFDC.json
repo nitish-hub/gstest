@@ -1,0 +1,32 @@
+  {
+  "contactId": "34f43f"
+  ,"description": "Dummy"
+  ,"name": "JACK"
+  ,"contactType": "Phone"
+  ,"contactAddress":   {
+					  "apartment": "Crona"
+					  ,"owner": "Shiva"
+					  ,"building": "Hene"
+					  ,"cellphone": 9000388500
+					  ,"company": "EY"
+					  ,"country": "India"
+					  ,"email": "acb@xyz.com"
+					  ,"firstName": "JACK"
+					  ,"lastName": "TRAVEN"
+					  ,"middleName": "S"
+					  ,"phone1": 43845996
+					  ,"poBox": 956960
+					  ,"postalCode": 102034
+					  ,"streetNumber": 1
+					  ,"town": "Rochester"
+					  ,"gender": "Male"
+					  ,"dateOfBirth": "01-JUL-2000"
+					  ,"visibleInAddressBook": "N"
+					  }
+  ,"assignedCouncil": "COUNCIL1"
+  ,"assignedTroop": "TROOP1"
+  ,"birthDate": "01-JUL-2000"
+  ,"gradeType": "Cookies"
+  ,"genderType": "Male"
+  ,"crmGlobalCustomerId": "GLOBAL100"
+  }

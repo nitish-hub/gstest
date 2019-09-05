@@ -1,0 +1,57 @@
+#%RAML 1.0
+title: gsusa-sfdc-order-api-s
+
+traits: 
+  client-id-required:
+      headers:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+
+types:
+  address: !include dataTypes/AddressSFDC.raml
+  customer: !include dataTypes/CustomerSFDC.raml
+  orderEntry: !include dataTypes/OrderEntrySFDC.raml
+  order: !include dataTypes/OrderSFDC.raml
+  success: !include dataTypes/successResponseSFDC.raml
+  error: !include dataTypes/errorResponseSFDC.raml
+
+/sfdc:
+  /v1:
+    /order:
+      /create:
+        is: [client-id-required]
+        post:
+          description: |
+            Create order in Salesforce.
+          body:
+            application/json:
+              type: order
+              example: !include examples/orderExampleSFDC.json
+          responses:
+            201: 
+              body:
+                application/json:
+                  type: success
+                  example: |
+                    {
+                        "status": "Successfully created order in Salesforce"
+                    }
+            400:
+              body:
+                application/json:
+                  type: error
+                  example: |
+                    {
+                        "message": "Failed to create order in Salesforce"
+                    }                              
+        
+                
+                  
+                
+          
+
+
+
+          

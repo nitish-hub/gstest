@@ -1,0 +1,19 @@
+#%RAML 1.0 DataType
+
+type: object
+properties:
+  commerceOrderNumber?: string
+  deliveryOrderGroups?:
+    type: array
+    items: !include orderEntry.raml
+  orderDiscounts?: !include price.raml
+  paymentInfo?: !include paymentInfo.raml
+  productDiscounts?: !include price.raml
+  subTotal?: !include price.raml
+  totalDiscounts?: !include price.raml
+  totalItems?: integer | nil
+  totalPrice?: !include price.raml
+  totalPriceWithTax?: !include price.raml
+  totalTax?: !include price.raml
+  user?: !include user.raml
+  created?: string | nil

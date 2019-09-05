@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="8c8ef930-6f6a-4c05-8893-ea3879f7aa4b" file="config-${env}.properties" />
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="5a66356f-c569-4a21-a334-db1009f5c176" >
+		<http:request-connection host="${auth.host}" protocol="HTTPS"/>
+	</http:request-config>
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="a930b8d4-cf5e-4873-9236-ebb2fa054b09" >
+		<http:request-connection protocol="HTTPS" host="cs42.salesforce.com" />
+	</http:request-config>
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="aa0d8516-e806-4f82-b6a7-91c367cc7ca2" flowRef="gsusa-account-api-s-main" />
+</mule>

@@ -1,0 +1,16 @@
+#%RAML 1.0 DataType
+
+#This file is located at dataTypes/OutputResponse-data-type.raml
+   
+type: object
+properties:
+  Response:
+    type: array
+    items: 
+      properties:
+        gsCRMGlobalID: string
+        firstName: string
+        lastName: string
+        contactType: string
+        sapStatus: statusResponse
+        sfdcStatus: statusResponse           

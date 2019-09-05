@@ -1,0 +1,19 @@
+#%RAML 1.0 DataType
+
+type: object
+properties:
+  orders:
+    type: array
+    items: 
+      properties:     
+        SequenceId?: string | nil
+        OrderedBy?: string | nil
+        OrderDate?: string | nil
+        BillingAddress?: !include AddressSFDC.raml
+        ShippingAddress?: !include AddressSFDC.raml
+        OrderAmount?: number | nil
+        RemainingBalance?: number | nil
+        HybrisId?: string | nil
+        OrderLines?: 
+          type: array
+          items: !include OrderEntrySFDC.raml

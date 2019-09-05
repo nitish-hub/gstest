@@ -1,0 +1,19 @@
+#%RAML 1.0 Library
+usage:
+types:
+  errors:
+    type: object
+    properties:
+      interfacecode: string 
+      creationdate: string
+      errordescription: string
+      errortype: string
+      errorcause: string
+      errormessage: string
+  status:
+    type: object
+    properties:
+      status: string
+      message: string
+      errorDetails: errors
+             

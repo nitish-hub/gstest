@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+	<flow name="OrderPayloadPublishFlow" doc:id="00cf0364-ec89-48be-957f-e69042fe858f" >
+
+				<ee:transform doc:name="Transform Message" doc:id="de950c9d-7327-4c9c-af9b-f55584759499" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="SFDCOrderData" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/json
+---
+{
+	orders: ([{
+		SequenceId: "1",
+		OrderedBy: payload.user.crmGlobalCustomerID,
+		OrderDate: substringBefore(payload.created,"T"),
+		BillingAddress: {
+			Street: payload.paymentInfo.billingAddress.line1,
+			City: payload.paymentInfo.billingAddress.town,
+			State: substringAfter(payload.paymentInfo.billingAddress.region.isocode,"-"),
+			Country: payload.paymentInfo.billingAddress.country.isocode,
+			PostalCode: payload.paymentInfo.billingAddress.postalCode
+		},
+		ShippingAddress: {
+			Street: payload.paymentInfo.billingAddress.line1,
+			City: payload.paymentInfo.billingAddress.town,
+			State: substringAfter(payload.paymentInfo.billingAddress.region.isocode,"-"),
+			Country: payload.paymentInfo.billingAddress.country.isocode,
+			PostalCode: payload.paymentInfo.billingAddress.postalCode
+		},
+		OrderAmount: payload.totalTax.value,
+		RemainingBalance: 0.0,
+		HybrisId: payload.commerceOrderNumber,
+		(payload.deliveryOrderGroups map( deliveryOrderGroup , indexOfDeliveryOrderGroup ) -> {
+		OrderLines: deliveryOrderGroup.entries map ( entry , indexOfEntry ) -> {
+				LineNumber: (entry.entryNumber + 1) as String,
+				LineHybrisId: entry.entryNumber as String,
+				Status: "PAID",
+				Price: entry.totalPrice.value,
+				OrderedFor: entry.contactInfo.crmGlobalCustomerID,
+				Council: entry.product.councilId,
+				LastPaymentDate: substringBefore(payload.created,"T") ,
+				EventDate: entry.product.startDate as Date {format: 'dd-MM-yyyy'} as String {format: 'yyyy-MM-dd'},
+				ProductId: entry.product.code,
+				Troops: entry.contactInfo.troopAssignments.assignedTroop,			
+		}
+	})}])
+}]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<try doc:name="Try" doc:id="626a9c78-11f9-4feb-9eae-b0239c185e30" >
+					<anypoint-mq:publish doc:name="Publish to SFDC queue" doc:id="1e048a78-e600-4975-847f-32e051410a62" destination="${anypoint.mq.sfdc.queue}" config-ref="Anypoint_MQ_Default_subscriber" outputMimeType="application/json">
+					<anypoint-mq:body><![CDATA[#[vars.SFDCOrderData]]]></anypoint-mq:body>
+				</anypoint-mq:publish>
+					<error-handler >
+						<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="3db5dd7a-f606-402d-881c-c19b2a51affa" >
+							<logger level="INFO" doc:name="Logger" doc:id="1bb13dc7-497c-4b3b-96de-272523ce1361" message="Exception occurred while publishing data to SFDC Order data queue | Processor Level"/>
+						</on-error-propagate>
+					</error-handler>
+				</try>
+		<logger level="INFO" doc:name="Logger" doc:id="7571b203-a637-4d6e-8402-83050a36086c" message="Order Data enqueued succesfully"/>
+		<ee:transform doc:name="Transform Message" doc:id="fdaa9eee-ca87-422b-8050-eb1567abd189" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status" : "SUCCESS",
+	"message" : "Order Data enqueued successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="ee7ea294-6f03-4f8c-aed8-c886f81630c9" >
+				<logger level="INFO" doc:name="Logger" doc:id="05cc00ac-6ea0-42d8-b25b-1da92e0d639b" message="Exception occurred in OrderPayloadPublishFlow"/>
+				<logger level="INFO" doc:name="Logger" doc:id="5f681532-0ddb-43e8-9717-af8b82cd2659" message='#[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"SAPToSFDCCreateOrder",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]'/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+	<flow name="SFDCOrderCreateFlow" doc:id="eae9d8c4-a8af-4ba6-86eb-54d90ae7be5c" >
+		<anypoint-mq:subscriber doc:name="Subscriber" doc:id="f022bd46-a8a5-419a-ada2-39ceeb834731" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.sfdc.queue}" outputMimeType="application/json">
+		</anypoint-mq:subscriber>
+		<try doc:name="Try" doc:id="f889262b-45d2-403c-8ca8-658a262697d1" >
+			<set-variable value="#[payload]" doc:name="Set Order Data" doc:id="ebffbd4a-c030-4d2e-98f0-a9ccc84e1c94" variableName="OrderData"/>
+			<http:request method="POST" doc:name="POST - Order SFDC System API" doc:id="a5c15ab4-85fd-4202-b90d-081a94369482" config-ref="SFDC_Order_Creation_Request_Config" path="${sfdc.order.api.path}" outputMimeType="application/json" sendCorrelationId="AUTO" followRedirects="true">
+				<http:body ><![CDATA[#[vars.OrderData]]]></http:body>
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	client_id : ${sfdc.order.api.client_id},
+	client_secret : ${sfdc.order.api.client_secret}
+}]]]></http:headers>
+			</http:request>
+			<logger level="INFO" doc:name="Logger" doc:id="b40686fe-5418-41de-b471-f61849f722af" message="#[payload]" />
+			<error-handler >
+
+
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="e1446bcf-081c-4b6d-b562-45f5b995a2c7" type="ANY">
+<logger level="INFO" doc:name="Logger" doc:id="f86bb9f2-1f5f-43ba-96a3-f195dee75e27" message="Exception occurred while creating order in Salesforce | Processor level" />
+					<logger level="INFO" doc:name="Logger" doc:id="cf64dc4a-6992-42e8-b3ab-d006de06dc51" message='#[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"SAPToSFDCCreateOrder",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]' />
+					<ee:transform doc:name="Transform Message" doc:id="7d0471d1-1070-4624-b171-949be92658b3">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{	
+	"InterfaceCode":"SAPToSFDCCreateOrder",
+	"InstanceID": "SAPToSFDCCreateOrder",
+	"CreationDate": (now() as String {format: "dd/MMM/yyyy HH:mm:ss"}),
+	"ErrorCode": error.errorType.identifier, 
+	"ErrorMessage": error.cause.message, 
+	"Payload" : vars.OrderData
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<anypoint-mq:publish doc:name="Publish data to error queue" doc:id="fa4d1b1a-95b8-4e93-a611-466bcebf6df9" config-ref="Anypoint_MQ_Default_subscriber" destination="${anypoint.mq.sfdc.error.queue}" />
+					<logger level="INFO" doc:name="Logger" doc:id="1a863e0d-9c53-473c-b161-18e84660b7a5" message="Data published to error queue"/>
+												
+</on-error-continue>
+			</error-handler>
+		</try>
+		<logger level="INFO" doc:name="Logger" doc:id="eba83443-ff07-440b-ad1a-4b032c43dc6c" message="#['Order creation process finished']"/>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="c8d4b83e-073c-4ecd-a0fb-adcf9cc87922" type="ANY">
+				<logger level="INFO" doc:name="Logger" doc:id="0d72d750-e1b4-4d4f-ae82-165f04ea9461" message="Exception occurred in SFDCOrderCreateFlow" />
+				<logger level="INFO" doc:name="Logger" doc:id="861cce0a-7f1d-4b11-8686-1882affe4b9b" message='#[%dw 2.0
+output application/json
+---
+"error response":{  
+      "interfacecode":"SAPToSFDCCreateOrder",
+      "creationdate":now(),
+      "errordescription":error.cause.errorMessage.payload,
+      "errortype":error.errorType.identifier,
+      "errormessage":error.cause.message
+}]'/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+</mule>

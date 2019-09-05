@@ -1,0 +1,41 @@
+#%RAML 1.0
+baseUri: https://anypoint.mulesoft.com/mocking/api/v1/links/edd69628-4108-4c50-8ada-16862079bac1/ # 
+version: v1
+title: gsusa-account-api-s
+
+types:
+  account: !include dataTypes/account.raml
+  errorResponse: !include dataTypes/errorResponse.raml
+  successResponse: !include dataTypes/successResponse.raml
+  address: !include dataTypes/address.raml
+
+traits: 
+  client-id-required:
+      headers:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+/sfdc/v1/accounts/get:
+  get:
+    is: [client-id-required]
+    queryParameters: 
+      id:
+        displayName: Global Customer ID
+        description: Global Id of Customer
+        type: string
+        example: EHTest123
+    responses:
+      200:
+        body:
+          application/json:
+            type: account
+            example: !include examples/get_accountById.json
+      404:
+          body:
+            application/json:
+              type: errorResponse
+              example: |
+                {
+                  "message": "Resource not found"
+                }        
