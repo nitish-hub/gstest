@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+	<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="7a245606-c58c-4a4e-89c6-20f9ea76f157" >
+		<http:request-connection protocol="HTTPS" host="test.salesforce.com" />
+	</http:request-config>
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="6471faae-26dd-4e1a-ace6-5bd557b0eb16" >
+		<http:listener-connection host="0.0.0.0" port="8082" />
+	</http:listener-config>
+	<flow name="testappdw3FlowCopy" doc:id="d9f4fe26-24cc-456d-b8c9-04301748424e" >
+<logger level="INFO" doc:name="Logger" doc:id="963c91c6-c494-4555-aa77-586f83b0c858" message='#["Input Time" ++ now() as String {format: "dd/MMM/yyyy HH:mm:ss"}]'/>
+		<logger level="INFO" doc:name="Logger" doc:id="9d41ad0b-904d-4edf-afa7-f593d564c3f0" message="${mule.home}\apps\${app.name}\"/>
+		<logger level="INFO" doc:name="Logger" doc:id="d35111d9-bacd-4f28-b757-0b0fd77c6b29" message='#["Before Java Execution Time" ++ now() as String {format: "dd/MMM/yyyy HH:mm:ss"}]'/>
+		<ee:transform doc:name="Transform Message" doc:id="b02729ac-d346-4e86-b848-84d64e475261" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+//import java!utils::MyUtils
+import java!com::mulejava::URLReader
+output application/json
+---
+{
+  "b": URLReader::mainRead()
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="3db31a11-6612-4882-85c9-10e4ad320ce7" >  
+    <ee:message >
+   		</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="jwtString" ><![CDATA[%dw 2.0
+//import java!utils::MyUtils
+import java!com::mulejava::StringManipulation
+import java!com::mulejava::JWTExample
+output application/json
+---
+{
+ //  "a": StringManipulation::staticFunctionTest("Test"),
+//  "b": StringManipulation::appendRandom("Utils"),
+   "jwt": JWTExample::getJWTToken("${sfdc.client_id}","${sfdc.username}","${sfdc.url}","${sfdc.kspass}","${sfdc.pkpass}","${sfdc.pkalias}")
+}]]></ee:set-variable>
+			</ee:variables>
+
+</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="56eab18f-98e4-445d-81f0-1678860ff509" message='#["After Java Execution Time" ++ now() as String {format: "dd/MMM/yyyy HH:mm:ss"}]'/>
+		<logger level="INFO" doc:name="Logger" doc:id="33efb04f-86be-4aec-8ef8-f16ce0bad252" message="#[payload.jwt]"/>
+		<ee:transform doc:name="Transform Message" doc:id="84146efe-2da2-414f-ac4c-01f37a59fdb5" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="jwtPayload" ><![CDATA[%dw 2.0
+output application/java
+---
+write({
+"grant_type" : "urn:ietf:params:oauth:grant-type:jwt-bearer",
+"assertion"  : payload.jwt
+},'application/x-www-form-urlencoded')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<try doc:name="Try" doc:id="3162a43e-e59c-498d-a5f7-dc4b89cdcb78" >
+			<http:request method="PUT" doc:name="POST - SFDC Token Authorization Call Test" doc:id="5e13381d-c487-48b6-af0a-8b93e782bdf0" config-ref="HTTP_Request_configuration1" path="${auth.sfdc.authTokenrequestPath}">
+				<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/x-www-form-urlencoded"
+}]]]></http:headers>
+				<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"grant_type" : "urn:ietf:params:oauth:grant-type:jwt-bearer",
+	"assertion" : vars["jwtString"].jwt
+}]]]></http:query-params>
+			</http:request>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="5bb79a86-d4bb-4992-ace3-026cae678de9" >
+					<logger level="INFO" doc:name="Logger" doc:id="391ca3e0-c6f5-491d-b909-e94b775bf243" message="Error occurred while generating token for accessing Salesforce DupCheck API | Processor level" />
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Transform Message" doc:id="9b922322-aa7d-42bf-8b7d-e462f952364b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="691501d7-389c-4f92-8239-c1fea6c313b4" message='#["Output Time" ++ now() as String {format: "dd/MMM/yyyy HH:mm:ss"}]'/>
+	</flow>
+	<flow name="JavaTestFLowCopy" doc:id="55c42675-8c57-4b43-bff1-d58490c4d7bc" >
+		<http:listener doc:name="Listener" doc:id="b93e4f2d-4d13-414b-9e05-158938f8c60e" path="/JavaTest" config-ref="HTTP_Listener_config1"/>
+		<ee:transform doc:name="Transform Message" doc:id="cf56a328-12e0-467e-bc15-030f3acd33dd" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import java!utils::MyUtils
+//import java!com::mulejava::URLReader
+output application/json
+---
+{
+  "b": MyUtils::appendRandom("Test")
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<java:invoke-static doc:name="Invoke static" doc:id="be5de65a-4251-4505-84db-94a93b435a95" class="utils.MyUtils" method="ConcatAB(String,String)">
+			<java:args ><![CDATA[#[{
+value1:"Hello",
+value2:"Java"
+}]]]></java:args>
+		</java:invoke-static>
+		<ee:transform doc:name="Transform Message" doc:id="89bafe91-738d-4f13-a51f-3409c81ac0c2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="JavaTestFLow2Copy" doc:id="d7b4249f-93bb-4151-8801-b9bc0a2a35c3" >
+		<http:listener doc:name="Listener" doc:id="6335689d-74c5-40c0-afbc-1b3d453dce6c" path="/JavaJWT" config-ref="HTTP_Listener_config1"/>
+		<java:invoke-static method="main()" doc:name="Invoke static" doc:id="7fb33b90-e162-4d91-b65e-c964f979b64c" class="utils.TestJWT" >
+		</java:invoke-static>
+		<ee:transform doc:name="Transform Message" doc:id="05f28dde-d2d7-4e57-8536-20db7a453769" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
