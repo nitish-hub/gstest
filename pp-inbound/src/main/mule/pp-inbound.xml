@@ -1,0 +1,299 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc" xmlns:xml-module="http://www.mulesoft.org/schema/mule/xml-module"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/xml-module http://www.mulesoft.org/schema/mule/xml-module/current/mule-xml-module.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="c5701028-be4d-49e2-823d-281a447e4847" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="a0e1fe00-b7f0-46a4-94fd-9bd5173b18e4" >
+		<db:oracle-connection host="localhost" user="system" password="system" serviceName="XE" />
+	</db:config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="1f30980d-d9b0-495a-8557-764f26b40d71" >
+		<jms:active-mq-connection username="admin" password="admin" >
+			<jms:factory-configuration brokerUrl="tcp://localhost:61616" />
+		</jms:active-mq-connection>
+	</jms:config>
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="6f92049d-4172-4536-a9ca-1e542fbda36b" >
+		<wsc:connection soapVersion="SOAP12" wsdlLocation="https://ehin-dev1.fa.us6.oraclecloud.com/xmlpserver/services/ExternalReportWSSService?WSDL" service="ExternalReportWSSService" port="ExternalReportWSSService" address="https://ehin-dev1.fa.us6.oraclecloud.com:443/xmlpserver/services/ExternalReportWSSService" >
+			<wsc:web-service-security >
+				<wsc:username-token-security-strategy username="aryan@mge.com" password="Welcome@123" addNonce="true" addCreated="true" />
+				<wsc:timestamp-security-strategy timeToLive="10000" />
+			</wsc:web-service-security>
+		</wsc:connection>
+	</wsc:config>
+	<wsc:config name="create_project" doc:name="Web Service Consumer Config" doc:id="935cd5f3-be7b-4ecf-b04a-d0e429e03180" >
+		<wsc:connection wsdlLocation="https://ehin-dev1.fa.us6.oraclecloud.com/pjfProjectDefinition/ProjectDefinitionPublicServiceV2?WSDL" service="ProjectDefinitionPublicService" port="ProjectDefinitionPublicServiceSoapHttpPort" address="https://ehin-dev1.fa.us6.oraclecloud.com:443/fscmService/ProjectDefinitionPublicServiceV2" >
+			<wsc:web-service-security >
+				<wsc:username-token-security-strategy username="aryan@mge.com" password="Welcome@123" addNonce="true" addCreated="true" />
+				<wsc:timestamp-security-strategy timeToLive="10000" />
+			</wsc:web-service-security>
+		</wsc:connection>
+	</wsc:config>
+	<flow name="pp-inboundFlow" doc:id="1eb9f2fa-2db7-4456-9b41-b9a9fc94bbd2" >
+		<http:listener doc:name="Listener" doc:id="82cbc22a-481b-4bf7-975e-a48e431e65de" config-ref="HTTP_Listener_config" path="/prj"/>
+		<db:select doc:name="GET_DATA_FROM_PP" doc:id="510671d2-52b7-4af4-9495-5c4c60b98d19" config-ref="Database_Config">
+			<db:sql >select * from mge_wo_hdr_stg where record_status='0' order by creation_date desc</db:sql>
+		</db:select>
+		<foreach doc:name="For Each" doc:id="9bd32fc8-f1dd-4cc4-8f13-fb7a4828a6dd" collection="#[payload]" counterVariableName="mycounter" rootMessageVariableName="myrootMessage">
+			<ee:transform doc:name="Transform Message" doc:id="8038d6fb-da77-495b-bdf5-e6448d848161" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<jms:publish doc:name="Publish" doc:id="8c97dd76-b7d7-4416-9ad0-a1c2e7273c81" config-ref="JMS_Config" destination="pp_prj"/>
+		</foreach>
+	</flow>
+	<flow name="pp-inboundFlow1" doc:id="2ef707d0-fcff-4b17-ab81-afa34524193a" >
+		<jms:listener doc:name="Listener" doc:id="eeda4721-9e91-49f3-8b21-f5bb22186c73" config-ref="JMS_Config" destination="pp_prj" numberOfConsumers="1" transactionalAction="ALWAYS_BEGIN"/>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="f9103de9-e5b2-4e66-824f-ce438df1c3f4" mimeType="application/json"/>
+		<ee:transform doc:name="Transform Message" doc:id="03e7656d-3eb2-407e-8d73-ed644f95e8be" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+root:{		
+				element:{
+					RECORD_STATUS:payload.RECORD_STATUS,
+					OTHER: payload.OTHER,
+					INSERTED_TIME : payload.INSERTED_TIME,
+					BATCH_ID : payload.BATCH_ID,
+					LAST_UPDATE_BY : payload.LAST_UPDATE_BY,
+					WORK_ORDER_DESCRIPTION : payload.WORK_ORDER_DESCRIPTION,
+					WORK_ORDER_NUMBER : payload.WORK_ORDER_NUMBER,
+					FUNDING_PROJECT_NUMBER : payload.FUNDING_PROJECT_NUMBER,
+					CONTRACT_ADMIN : payload.CONTRACT_ADMIN,
+					BUS_SEGMENT : payload.BUS_SEGMENT,
+					WO_TYPE_DESCRIPTION : payload.WO_TYPE_DESCRIPTION,
+					ENGINEER : payload.ENGINEER,
+					LAST_UPDATE_DATE : payload.LAST_UPDATE_DATE,
+					CHARGEABLE_STATUS_CLASS_CODE : payload.CHARGEABLE_STATUS_CLASS_CODE,
+					CREATION_DATE : payload.CREATION_DATE,
+					DEPARTMENT_ID : payload.DEPARTMENT_ID,
+					PLANT_ACCOUNTANT : payload.PLANT_ACCOUNTANT,
+					WO_STATUS : payload.WO_STATUS,
+					EST_START_DATE : payload.EST_START_DATE,
+					PROJ_MANAGER : payload.PROJ_MANAGER,
+					COMPLETION_DATE : payload.COMPLETION_DATE,
+					COMPANY_ID : payload.COMPANY_ID,
+					CREATED_BY : payload.CREATED_BY					
+				}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[payload]" doc:name="Set Variable" doc:id="6a812cb0-1ef1-4488-9700-0b529b777a97" variableName="v_dqueue"/>
+		<set-variable value="#[%dw 2.0
+output application/json
+---
+payload]" doc:name="Set Variable" doc:id="7cccbf14-23d1-4b2e-9f6c-77f20012cc5a" variableName="v_dqueue_transform"/>
+		<xml-module:xslt-transform doc:name="Xslt transform" doc:id="356bfc0a-a215-4282-8f29-53a91b24078e" >
+			<xml-module:xslt >&lt;xsl:stylesheet version=&quot;2.0&quot; xmlns:xsl=&quot;http://www.w3.org/1999/XSL/Transform&quot; xmlns:pub=&quot;http://xmlns.oracle.com/oxp/service/PublicReportService&quot;&gt;
+    &lt;xsl:output omit-xml-declaration=&quot;yes&quot; indent=&quot;yes&quot; encoding=&quot;utf-8&quot; /&gt;
+    &lt;xsl:param name=&quot;p_wo_number&quot; /&gt;
+    &lt;xsl:template match=&quot;/&quot;&gt;
+        &lt;pub:runReport&gt;
+            &lt;pub:reportRequest&gt;
+                &lt;pub:parameterNameValues&gt;
+                    &lt;xsl:if test=&quot;not(root/element/WORK_ORDER_NUMBER='')&quot;&gt;
+                        &lt;pub:item&gt;
+                            &lt;pub:name&gt;
+                                &lt;xsl:value-of select=&quot;'p_wo_number'&quot; /&gt;
+                            &lt;/pub:name&gt;
+                            &lt;pub:values&gt;
+                                &lt;pub:item&gt;
+                                    &lt;xsl:value-of select=&quot;root/element/WORK_ORDER_NUMBER&quot; /&gt;
+                                &lt;/pub:item&gt;
+                            &lt;/pub:values&gt;
+                        &lt;/pub:item&gt;
+                    &lt;/xsl:if&gt;
+                    &lt;xsl:if test=&quot;not(root/element/FUNDING_PROJECT_NUMBER='')&quot;&gt;
+                        &lt;pub:item&gt;
+                            &lt;pub:name&gt;
+                                &lt;xsl:value-of select=&quot;'p_fund_number'&quot; /&gt;
+                            &lt;/pub:name&gt;
+                            &lt;pub:values&gt;
+                                &lt;pub:item&gt;
+                                    &lt;xsl:value-of select=&quot;root/element/FUNDING_PROJECT_NUMBER&quot; /&gt;
+                                &lt;/pub:item&gt;
+                            &lt;/pub:values&gt;
+                        &lt;/pub:item&gt;
+                    &lt;/xsl:if&gt;
+                    &lt;xsl:if test=&quot;not(root/element/PLANT_ACCOUNTANT='')&quot;&gt;
+                        &lt;pub:item&gt;
+                            &lt;pub:name&gt;
+                                &lt;xsl:value-of select=&quot;'p_plant_accountant'&quot; /&gt;
+                            &lt;/pub:name&gt;
+                            &lt;pub:values&gt;
+                                &lt;pub:item&gt;
+                                    &lt;xsl:value-of select=&quot;root/element/PLANT_ACCOUNTANT&quot; /&gt;
+                                &lt;/pub:item&gt;
+                            &lt;/pub:values&gt;
+                        &lt;/pub:item&gt;
+                    &lt;/xsl:if&gt;
+                    &lt;xsl:if test=&quot;not(root/element/CONTRACT_ADMIN='')&quot;&gt;
+                        &lt;pub:item&gt;
+                            &lt;pub:name&gt;
+                                &lt;xsl:value-of select=&quot;'p_contract_admin'&quot; /&gt;
+                            &lt;/pub:name&gt;
+                            &lt;pub:values&gt;
+                                &lt;pub:item&gt;
+                                    &lt;xsl:value-of select=&quot;root/element/CONTRACT_ADMIN&quot; /&gt;
+                                &lt;/pub:item&gt;
+                            &lt;/pub:values&gt;
+                        &lt;/pub:item&gt;
+                    &lt;/xsl:if&gt;
+                    &lt;xsl:if test=&quot;not(root/element/ENGINEER='')&quot;&gt;
+                        &lt;pub:item&gt;
+                            &lt;pub:name&gt;
+                                &lt;xsl:value-of select=&quot;'p_engineer'&quot; /&gt;
+                            &lt;/pub:name&gt;
+                            &lt;pub:values&gt;
+                                &lt;pub:item&gt;
+                                    &lt;xsl:value-of select=&quot;root/element/ENGINEER&quot; /&gt;
+                                &lt;/pub:item&gt;
+                            &lt;/pub:values&gt;
+                        &lt;/pub:item&gt;
+                    &lt;/xsl:if&gt;
+                    &lt;xsl:if test=&quot;not(root/element/OTHER='')&quot;&gt;
+                        &lt;pub:item&gt;
+                            &lt;pub:name&gt;
+                                &lt;xsl:value-of select=&quot;'p_other'&quot; /&gt;
+                            &lt;/pub:name&gt;
+                            &lt;pub:values&gt;
+                                &lt;pub:item&gt;
+                                    &lt;xsl:value-of select=&quot;root/element/OTHER&quot; /&gt;
+                                &lt;/pub:item&gt;
+                            &lt;/pub:values&gt;
+                        &lt;/pub:item&gt;
+                    &lt;/xsl:if&gt;
+                    &lt;xsl:if test=&quot;not(root/element/WO_TYPE_DESCRIPTION='')&quot;&gt;
+                        &lt;pub:item&gt;
+                            &lt;pub:name&gt;
+                                &lt;xsl:value-of select=&quot;'p_project_template'&quot; /&gt;
+                            &lt;/pub:name&gt;
+                            &lt;pub:values&gt;
+                                &lt;pub:item&gt;
+                                    &lt;xsl:value-of select=&quot;concat(root/element/COMPANY_ID, '-', root/element/WO_TYPE_DESCRIPTION )&quot; /&gt;
+                                &lt;/pub:item&gt;
+                            &lt;/pub:values&gt;
+                        &lt;/pub:item&gt;
+                    &lt;/xsl:if&gt;
+                    &lt;xsl:if test=&quot;not(root/element/WO_TYPE_DESCRIPTION='')&quot;&gt;
+                        &lt;pub:item&gt;
+                            &lt;pub:name&gt;
+                                &lt;xsl:value-of select=&quot;'p_burden_schedule'&quot; /&gt;
+                            &lt;/pub:name&gt;
+                            &lt;pub:values&gt;
+                                &lt;pub:item&gt;
+                                    &lt;xsl:value-of select=&quot;root/element/WO_TYPE_DESCRIPTION&quot; /&gt;
+                                &lt;/pub:item&gt;
+                            &lt;/pub:values&gt;
+                        &lt;/pub:item&gt;
+                    &lt;/xsl:if&gt;
+                &lt;/pub:parameterNameValues&gt;
+                &lt;pub:reportAbsolutePath&gt;/Custom/Integrations/INT040-MGE_PROJECTS_FROM_POWERPLANT_TO_ERP/MGE_PROJECT_FROM_PP_TO_ERP_TMPLT.xdo&lt;/pub:reportAbsolutePath&gt;
+                &lt;pub:sizeOfDataChunkDownload&gt;
+                    &lt;xsl:value-of select=&quot;-1&quot; /&gt;
+                &lt;/pub:sizeOfDataChunkDownload&gt;
+            &lt;/pub:reportRequest&gt;
+        &lt;/pub:runReport&gt;
+    &lt;/xsl:template&gt;
+&lt;/xsl:stylesheet&gt;</xml-module:xslt>
+			<xml-module:context-properties ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+	'p_wo_number':payload.root.element.WORK_ORDER_NUMBER	
+}]]]></xml-module:context-properties>
+		</xml-module:xslt-transform>
+		<wsc:consume doc:name="Consume" doc:id="93240a6a-0a5e-4252-8689-80fc6555255b" config-ref="Web_Service_Consumer_Config" operation="runReport"/>
+		<ee:transform doc:name="Transform Message" doc:id="73131357-b6b2-4218-aaef-d366686a91fa" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Binaries
+output text/plain
+ns ns0 http://xmlns.oracle.com/oxp/service/PublicReportService
+---
+fromBase64(payload.body.ns0#runReportResponse.ns0#runReportReturn.ns0#reportBytes as String)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="76ccd33e-a040-4bdd-b13c-eec1fb3b7a54" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+read(payload as String,"application/xml")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<set-variable value="#[output application/json
+---
+{
+PROJ_TEMPLATE : payload.DATA_DS.G_1.PROJECT_TEMPLATE,
+BURD_SCH : payload.DATA_DS.G_1.BURDEN_SCHEDULE
+}]" doc:name="Set Variable" doc:id="4d5d03df-3f7b-4b8f-aa9b-03cccc9a6bd7" variableName="v_bip"/>
+		<choice doc:name="Choice" doc:id="05a163a9-40fe-4470-bc49-d8552aade1e8" >
+			<when doc:id="7ea30ead-76fa-40d0-837e-eec42f2fad9f" expression="#[output application/java
+---
+payload.DATA_DS.G_1.ERP_WO_COUNT == '0']">
+				<flow-ref doc:name="Flow Reference" doc:id="9f673a22-9658-4d95-932d-36a222568015" name="pp-inboundFlow2"/>
+			</when>
+		</choice>
+	</flow>
+	<flow name="pp-inboundFlow2" doc:id="bbfce2ea-02c4-485a-9c0f-1465410d905c" >
+		<set-payload value="#[vars.v_dqueue]" doc:name="Set Payload" doc:id="216701fc-b6bf-467f-93a0-0964846e8192" mimeType="application/json"/>
+		<xml-module:xslt-transform doc:name="Xslt transform" doc:id="56601a63-c7ee-473c-8ba7-fdb1bb83f168" >
+			<xml-module:xslt >&lt;xsl:stylesheet version=&quot;2.0&quot; xmlns:xsl=&quot;http://www.w3.org/1999/XSL/Transform&quot; xmlns:tns=&quot;http://xmlns.oracle.com/apps/projects/foundation/projectDefinition/publicService/maintainProjectV2/types/&quot; xmlns:ns3=&quot;http://xmlns.oracle.com/apps/projects/foundation/projectDefinition/publicService/maintainProjectV2/&quot; xmlns:fn=&quot;http://www.w3.org/2005/xpath-functions&quot;&gt;
+    &lt;xsl:output omit-xml-declaration=&quot;yes&quot; indent=&quot;yes&quot; encoding=&quot;utf-8&quot; /&gt;
+	&lt;xsl:param name=&quot;p_template_key&quot; /&gt;
+	&lt;xsl:param name=&quot;p_burden_schedule&quot; /&gt;
+	&lt;xsl:param name=&quot;p_legal_entity&quot; /&gt;
+	&lt;xsl:param name=&quot;p_organization&quot; /&gt;
+    &lt;xsl:template match=&quot;/&quot;&gt;
+        &lt;tns:createProject&gt;
+            &lt;tns:inProject&gt;
+				&lt;ns3:ProjectName&gt;
+					&lt;xsl:value-of select=&quot;concat(root/element/WORK_ORDER_NUMBER,' ',root/element/WORK_ORDER_DESCRIPTION)&quot;/&gt;
+				&lt;/ns3:ProjectName&gt;
+				&lt;ns3:StartDate&gt;
+					&lt;xsl:value-of select=&quot;root/element/EST_START_DATE&quot;/&gt;
+				&lt;/ns3:StartDate&gt;											
+				&lt;ns3:EndDate&gt;
+					&lt;xsl:value-of select=&quot;'4712-12-31'&quot;/&gt;
+				&lt;/ns3:EndDate&gt;
+				&lt;ns3:TemplateKey&gt;
+					&lt;xsl:value-of select=&quot;$p_template_key&quot;/&gt;
+				&lt;/ns3:TemplateKey&gt;
+				&lt;ns3:BurdenScheduleName&gt;
+					&lt;xsl:value-of select=&quot;$p_burden_schedule&quot;/&gt;
+				&lt;/ns3:BurdenScheduleName&gt;
+				&lt;ns3:OwningOrganization&gt;
+					&lt;xsl:value-of select='$p_organization'/&gt;
+				&lt;/ns3:OwningOrganization&gt;
+				&lt;ns3:LegalEntity&gt;
+					&lt;xsl:value-of select='$p_legal_entity'/&gt;
+				&lt;/ns3:LegalEntity&gt;
+			&lt;/tns:inProject&gt;
+        &lt;/tns:createProject&gt;
+    &lt;/xsl:template&gt;
+&lt;/xsl:stylesheet&gt;</xml-module:xslt>
+			<xml-module:context-properties ><![CDATA[#[output application/java
+---
+{
+p_template_key:vars.v_bip.PROJ_TEMPLATE,
+p_burden_schedule:vars.v_bip.BURD_SCH,
+p_legal_entity: Mule::p("LE." ++ vars.v_dqueue_transform.root.element.COMPANY_ID as String),
+p_organization: Mule::p("ORG." ++ vars.v_dqueue_transform.root.element.DEPARTMENT_ID as String)
+}]]]></xml-module:context-properties>
+		</xml-module:xslt-transform>
+		<wsc:consume operation="createProject" doc:name="Consume" doc:id="4401f58a-d8e6-43a4-a0b5-923f30b6abe5" config-ref="create_project"/>
+	</flow>
+</mule>
