@@ -4,7 +4,7 @@
 
 	<groupId>com.mycompany</groupId>
 	<artifactId>testappdw3</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>$BUILD_NUMBER-SNAPSHOT</version>
     <packaging>mule-application</packaging>
 
 	<name>testappdw3</name>
