@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd">
+    <http:request-config name="sfdc-accesstoken-httpRequestConfig" doc:name="HTTP Request configuration" doc:id="0dceebba-e85e-4df7-bf3b-1f04c67fd229" responseTimeout="${httpRequestor.timeout}">
+		<http:request-connection connectionIdleTimeout="${httpRequestor.timeout}" host="${auth.sfdc.authTokenrequestURL}" protocol="HTTPS">
+			<reconnection>
+				<reconnect frequency="${httpRequestor.retry.interval}" count="${httpRequestor.retry.count}"/>
+			</reconnection>
+		</http:request-connection>
+	</http:request-config>
+	<global-property doc:name="Global Property" doc:id="ceb6a394-c5c5-403b-b005-259da5856ea2" name="env" value="GSDEV" />
+	<configuration-properties doc:name="Configuration properties" doc:id="abf45e3d-8119-4a42-b3be-8214ada4e4b7" file="config-${env}.properties" />	
+</mule>
