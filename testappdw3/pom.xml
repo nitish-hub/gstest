@@ -26,7 +26,6 @@
 				<artifactId>mule-maven-plugin</artifactId>
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
-				 <param>${project.build.finalName}</param>
 				<configuration>
 				</configuration>
 			</plugin>
