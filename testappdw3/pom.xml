@@ -4,7 +4,7 @@
 
 	<groupId>com.mycompany</groupId>
 	<artifactId>${release.artifactId}</artifactId>
-    <version>${git.branch}</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>mule-application</packaging>
 
 	<name>testappdw3</name>
