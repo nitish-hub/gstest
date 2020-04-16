@@ -4,7 +4,7 @@
 
 	<groupId>com.mycompany</groupId>
 	<artifactId>${release.artifactId}</artifactId>
-    <version>1.0.0-SNAPSHOT</version>
+    <version>${git.branch}</version>
     <packaging>mule-application</packaging>
 
 	<name>testappdw3</name>
@@ -18,7 +18,7 @@
 	</properties>
 
 	<build> 
-		<finalName>${git.branch}-${artifactId}</finalName>
+		<finalName>${artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
