@@ -18,7 +18,7 @@
 	</properties>
 
 	<build> 
-		<finalName>${git.branch}-${artifactId}</finalName>
+		<finalName>${artifactId}</finalName>
 		<plugins>
 			<plugin>
     <groupId>pl.project13.maven</groupId>
