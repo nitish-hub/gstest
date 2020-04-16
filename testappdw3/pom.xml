@@ -18,7 +18,7 @@
 	</properties>
 
 	<build> 
-		<finalName>${artifactId}</finalName>
+		<finalName>${git.branch}-${artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
@@ -26,6 +26,7 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
+				<dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
 				</configuration>
 			</plugin>
 		<plugin>
