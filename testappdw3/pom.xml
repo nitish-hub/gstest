@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.mycompany</groupId>
-	<artifactId>${release.artifactId}</artifactId>
+	<artifactId>testappdw3</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>mule-application</packaging>
 
@@ -18,7 +18,7 @@
 	</properties>
 
 	<build> 
-		<finalName>${artifactId}</finalName>
+		<finalName>${release.artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
