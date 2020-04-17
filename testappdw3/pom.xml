@@ -19,7 +19,7 @@
 	</properties>
 
 	<build>
-		<finalName>$BUILD_NUMBER</finalName>
+		<finalName>$artifactId</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
