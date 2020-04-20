@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:anypoint-mq="http://www.mulesoft.org/schema/mule/anypoint-mq" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/anypoint-mq http://www.mulesoft.org/schema/mule/anypoint-mq/current/mule-anypoint-mq.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<flow name="invoiceCreationFlow" doc:id="81fbf812-9a6b-4e9d-bf2f-b8282e6d8157" >
+		<ee:transform doc:name="Extract custom fields for upsert" doc:id="1389aee3-5241-4384-a0bd-6eeceefa58fb" >
+			<ee:message>
+			</ee:message> 
+			<ee:variables >
+				<ee:set-variable variableName="invoiceData" ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+				<ee:set-variable variableName="addRecList" ><![CDATA[%dw 2.0
+var line= (payload.itemList.item map  ((x,y) -> {
+		( x.customFieldList.customField map((e, i) -> {
+		"recType": {
+		"scriptId": 'customrecord_' ++ e.scriptId,
+		"type": "CUSTOM_RECORD_TYPE"
+	} as Object {class: "org.mule.module.netsuite.extension.api.CustomizationRef"},
+	"name": e.value,
+	"externalId" : e.value
+}) filter ($.recType.scriptId contains ("cseg_vol2_gsusa_id")) )
+}))
+
+var header = (payload.customFieldList.customField map (( customField , indexOfCustomField ) -> {
+	"recType": {
+		"scriptId": 'customrecord_' ++ customField.scriptId,
+		"type": "CUSTOM_RECORD_TYPE"
+	} as Object {class: "org.mule.module.netsuite.extension.api.CustomizationRef"},
+	"name": customField.value,
+	"externalId" : customField.value
+})
+filter ($.recType.scriptId contains ("cseg")))
+output application/java
+---
+header ++ line]]></ee:set-variable>
+			</ee:variables>
+		
+</ee:transform>
+		<try doc:name="Try" doc:id="80b9d3cd-a366-4cf0-be4c-65663066efad" >
+			<netsuite:upsert-list doc:name="Upsert Custom Fields" doc:id="a138bc03-4cc2-4442-9e60-c15d12e2471d" config-ref="NetSuite_Config" recordType="CUSTOM_RECORD">
+				<netsuite:record-maps><![CDATA[#[vars.addRecList]]]></netsuite:record-maps>
+			</netsuite:upsert-list>
+			<logger level="INFO" doc:name="Print response" doc:id="77ccfc43-a417-436d-94c9-7d41011e16cb" message="#[%dw 2.0
+output application/json
+---
+payload]"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="04d3d17c-ebc0-4c94-a362-77ef8439e5b9" type="ANY">
+					<logger level="INFO" doc:name="Print exception" doc:id="90b176e8-4c5f-4099-b0a6-cc7054490c95" message="#[%dw 2.0
+output application/json
+---
+{
+    &quot;interfaceCode&quot;: &quot;INVOICE&quot;,
+    &quot;applicationName&quot;: p('app.mule.name'),
+    &quot;environment&quot;: 'DEV',
+    &quot;flow&quot;: &quot;invoiceCreationNetsuiteFlow&quot;,
+    &quot;tracePoint&quot;: &quot;Call add list API&quot;,
+    &quot;timestamp&quot;: now(),
+    &quot;message&quot;: &quot;Error occurred while adding custom record in Netsuite&quot;
+}]" />
+				</on-error-propagate>
+			
+</error-handler>
+		</try>
+		<ee:transform doc:name="Create invoice data" doc:id="3e21f993-8eb3-41e2-85b2-d99e27358f00" >
+			<ee:message >
+				<ee:set-payload resource="Invoice_Request.dwl" />
+			</ee:message>
+		</ee:transform>
+		<try doc:name="Try" doc:id="a8cc3aed-d62b-43b6-ba51-923064801cd4" >
+			<netsuite:add-record doc:name="Create Invoice" doc:id="81a5f482-dcdf-4b5f-80ce-8722b95bc870" config-ref="NetSuite_Config" recordType="INVOICE" attributes="#[payload]" />
+			<logger level="INFO" doc:name="Print response" doc:id="6f5bb440-76f8-4eaa-8e16-b19fb233f6d5" message="#[%dw 2.0
+output application/json
+---
+payload]"/>
+			<error-handler >
+				<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e847fe2e-c0d6-4a60-a347-1dc556e6a8cf" type="ANY">
+					<logger level="INFO" doc:name="Print exception" doc:id="124fb9ab-2623-4f1c-926a-2ea7ba618e1b" message="#[%dw 2.0
+output application/json
+---
+{
+    &quot;interfaceCode&quot;: &quot;INVOICE&quot;,
+    &quot;applicationName&quot;: p('app.mule.name'),
+    &quot;environment&quot;: 'DEV',
+    &quot;flow&quot;: &quot;invoiceCreationNetsuiteFlow&quot;,
+    &quot;tracePoint&quot;: &quot;Call invoice creaton system API&quot;,
+    &quot;timestamp&quot;: now(),
+    &quot;message&quot;: &quot;Error occurred while creating invoice in Netsuite&quot;
+}]"/>
+				</on-error-propagate>
+			</error-handler>
+		</try>
+		<ee:transform doc:name="Success Response" doc:id="9a00b0b1-dfdd-4c04-8129-ac0b74b82fbe" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"status" : "SUCCESS",
+	"message" : "Invoice created successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="e620653c-7b08-4626-91f9-587195c4346d" type="ANY">
+				<logger level="INFO" doc:name="Print exception" doc:id="13fdbb40-daf9-4ab3-93e3-bdca49954266" message="#[%dw 2.0
+output application/json
+---
+{
+    &quot;interfaceCode&quot;: &quot;INVOICE&quot;,
+    &quot;applicationName&quot;: p('app.mule.name'),
+    &quot;environment&quot;: 'DEV',
+    &quot;flow&quot;: &quot;Exception invoiceCreationNetsuiteFlow&quot;,
+    &quot;tracePoint&quot;: &quot;Call invoice creation system API&quot;,
+    &quot;timestamp&quot;: now(),
+    &quot;message&quot;: &quot;Error occurred while creating invoice in Netsuite&quot;
+}]"/>
+			</on-error-propagate>
+		</error-handler>
+
+</flow>
+</mule>

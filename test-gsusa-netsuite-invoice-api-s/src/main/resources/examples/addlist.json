@@ -1,0 +1,16 @@
+[
+    {
+        "recType": {
+            "scriptId": "customrecord_cseg_vol2_hybris_id",
+            "type": "CUSTOM_RECORD_TYPE"
+        },
+        "name": "ABCDE"
+    },
+    {
+        "recType": {
+            "scriptId": "customrecord_cseg_vol2_gsusa_id",
+            "type": "CUSTOM_RECORD_TYPE"
+        },
+        "name": "EFJHOI"
+    }
+]

@@ -1,0 +1,30 @@
+#%RAML 1.0 DataType
+
+type: object
+properties:
+  externalId?: string | nil
+  entity?: !include recordRef.raml
+  account?: !include recordRef.raml
+  tranDate?: string | nil
+  dueDate?: string | nil
+  email?: string | nil
+  isTaxable?: boolean | nil
+  taxItem?: !include recordRef.raml
+  taxRate?: string | nil
+  itemList?:
+    type: object
+    properties:
+      item?:
+        type: array
+        items: !include item.raml
+  customFieldList?:
+    type: object
+    properties:
+      customField?:
+        type: array
+        items: 
+          properties:
+            value?: string | nil
+            scriptId?: string | nil
+  
+  

@@ -1,0 +1,56 @@
+#%RAML 1.0
+version: v1
+title: gsusa-netsuite-invoice-api-s
+description: This API will create invoices in NetSuite. 
+
+traits: 
+  client-id-required:
+      headers:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+
+types:
+  invoice: !include dataTypes/invoiceRequest.raml
+  success: !include dataTypes/successResponse.raml
+  error: !include dataTypes/errorResponse.raml
+
+/netsuite:
+  /v1:
+    /invoice:
+      /create:
+        is: [client-id-required]
+        post:
+          description: |
+            Create invoice in NetSuite.
+          body:
+            application/json:
+              type: invoice
+              example: !include examples/invoiceCreateRequest.json
+          responses:
+            201: 
+              body:
+                application/json:
+                  type: success
+                  example: |
+                    {
+                        "status": "Successfully created invoice in NetSuite"
+                    }
+            400:
+              body:
+                application/json:
+                  type: error
+                  example: |
+                    {
+                        "message": "Failed to create invoice in NetSuite"
+                    }                                  
+        
+                
+                  
+                
+          
+
+
+
+          
