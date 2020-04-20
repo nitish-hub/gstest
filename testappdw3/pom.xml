@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.mycompany</groupId>
-	<artifactId>testappdw3</artifactId>
+	<artifactId>${release.artifactId}</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>mule-application</packaging>
 
@@ -17,7 +17,8 @@
 		<mule.maven.plugin.version>3.2.7</mule.maven.plugin.version>
 	</properties>
 
-	<build>
+	<build> 
+		<finalName>${artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
@@ -25,7 +26,9 @@
 				<version>${mule.maven.plugin.version}</version>
 				<extensions>true</extensions>
 				<configuration>
+				<dotGitDirectory>${project.basedir}/.git</dotGitDirectory>
 				</configuration>
+				
 			</plugin>
 		<plugin>
                 <groupId>org.apache.maven.plugins</groupId>
