@@ -1,0 +1,20 @@
+#%RAML 1.0 DataType
+
+type: object
+properties:
+  item?: !include recordRef.raml
+  description?: string | nil
+  line?: string | nil
+  quantity?: string | nil
+  rate?: string | nil
+  isTaxable?: boolean
+  customFieldList?:
+    type: object
+    properties:
+      customField?:
+        type: array
+        items: 
+          properties:
+            value?: string | nil
+            scriptId?: string | nil
+            

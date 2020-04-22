@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	xmlns:netsuite="http://www.mulesoft.org/schema/mule/netsuite" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/netsuite http://www.mulesoft.org/schema/mule/netsuite/current/mule-netsuite.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+	
+	<http:listener-config name="Global_Listener_Config" doc:name="HTTP Listener config" doc:id="b5d1121c-3c82-4e3d-9ae1-15c449ea9824" >
+		<http:listener-connection host="0.0.0.0" port="${http.private.port}" protocol="HTTP" connectionIdleTimeout="${HTTPListener.timeout}">
+		</http:listener-connection>
+	</http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="ca3c4a0e-8ff2-4059-a7ad-319a8a493559" file="config-${env}.properties" />
+	<netsuite:config name="NetSuite_Config" doc:name="NetSuite Config" doc:id="bb5000ff-690a-43e9-8090-b999cefc82a2" runServerSuiteScriptAndTriggerWorkflows="true">
+		<netsuite:token-authentication-connection consumerKey="${Netsuite.consumer.key}" consumerSecret="${Netsuite.consumer.secret}" tokenId="${Netsuite.token.id}" tokenSecret="${Netsuite.token.secret}" account="${Netsuite.account}" readTimeout="${Netsuite.Read.Timeout}" connectionTimeout="${Netsuite.Connection.Timeout}"/>
+	</netsuite:config>
+	<api-gateway:autodiscovery apiId="${autodiscovery.id}" doc:name="API Autodiscovery" doc:id="33696ed5-f88f-4114-ab0d-f451ab683fe0" flowRef="gsusa-netsuite-invoice-api-s-main" />	
+</mule>
+	
