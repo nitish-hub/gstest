@@ -18,6 +18,7 @@
 	</properties>
 
 	<build>
+		<finalName>${release.artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
