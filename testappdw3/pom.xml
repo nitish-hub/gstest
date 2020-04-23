@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>com.mycompany</groupId>
-	<artifactId>${release.artifactId}</artifactId>
+	<artifactId>testappdw3</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>mule-application</packaging>
 
@@ -14,11 +14,10 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
 		<app.runtime>4.2.0</app.runtime>
-		<mule.maven.plugin.version>3.2.7</mule.maven.plugin.version>
+		<mule.maven.plugin.version>3.3.3</mule.maven.plugin.version>
 	</properties>
 
 	<build> 
-		<finalName>${artifactId}</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.mule.tools.maven</groupId>
@@ -35,6 +34,19 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.7.0</version>
                 <configuration>
+			<cloudHubDeployment>
+                <uri>https://anypoint.mulesoft.com</uri>
+                <muleVersion>${app.runtime}</muleVersion>
+                <businessGroup>${businessGroup}</businessGroup>
+                <workers>${workers}</workers>
+                <username>${username}</username>
+                <password>${password}</password>
+                                <environment>${environment_name}</environment>
+                                <region>${cloudhub.region}</region>
+                                         <env>${env}</env>
+                                         <anypoint.platform.client_id>${client_id}</anypoint.platform.client_id>
+                                         <anypoint.platform.client_secret>${client_secret}</anypoint.platform.client_secret>
+</cloudHubDeployment>
                     <compilerArgs>
                         <args>-parameters</args>
                     </compilerArgs>
